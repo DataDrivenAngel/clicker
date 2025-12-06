@@ -28,6 +28,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    touch-action: manipulation;
 }
 
 
@@ -123,6 +124,7 @@ body {
     outline: none;
     z-index: 5;
     border-radius: 50%;
+    touch-action: manipulation;
 }
 
 .cookie-btn:active {
@@ -590,6 +592,10 @@ body {
     transition: opacity 0.2s;
     white-space: nowrap;
     /* Prevent text wrapping */
+    font-variant-numeric: tabular-nums;
+    /* Keep numbers at consistent width */
+    animation: none;
+    /* Prevent vibration */
 }
 
 .heat-container.active .heat-text {
