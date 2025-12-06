@@ -195,7 +195,7 @@
                     icon: '🔥',
                     levels: [
                         { cost: 100, desc: 'Unlocks Heat Meter (x2 Clicks at Max)' },
-                        { cost: 250, desc: 'Heat decays 50% slower' },
+                        { cost: 250, desc: 'Heat decays 50% slower, +1 cookie per click above 50% heat' },
                         { cost: 500, desc: 'x5 Click Power at Max Heat' },
                         { cost: 2500, desc: 'Quick Ignition: +15 heat per click' },
                         { cost: 10000, desc: 'Inferno Mode: +10% CPS at Max Heat' },
@@ -777,8 +777,14 @@
 
             // Calculate Click Power
             let clickPower = 1;
+            const frenzyLevel = state.metaUpgrades.clickFrenzy.count;
+
+            // Level 2: +1 cookie per click above 50% heat
+            if (frenzyLevel >= 2 && heat > 50) {
+                clickPower += 1;
+            }
+
             if (heat >= 100) {
-                const frenzyLevel = state.metaUpgrades.clickFrenzy.count;
                 clickPower = (frenzyLevel >= 3) ? 5 : 2;
 
                 // Level 7: Blazing Strikes - +5 cookies per click at max heat
@@ -1043,12 +1049,21 @@
 
         function updateMaxCpsDisplay() {
             if (state.metaUpgrades.clickFrenzy.count > 0) {
-                maxCpsDisplay.style.display = 'block';
-                maxCpsValue.textContent = maxClicksPerSecond;
+                // Check if there are any recent clicks (within last 60 seconds)
+                const now = Date.now();
+                const sixtySecondsAgo = now - 60000;
+                const hasRecentClicks = clickTimestamps.some(t => t > sixtySecondsAgo);
 
-                // Opacity based on heat (inverted - lower heat = more visible)
-                const opacity = 1 - (heat / 150) * 0.7; // Range from 1.0 to 0.3
-                maxCpsDisplay.style.opacity = Math.max(0.3, opacity);
+                if (hasRecentClicks) {
+                    maxCpsDisplay.style.display = 'block';
+                    maxCpsValue.textContent = maxClicksPerSecond;
+
+                    // Opacity based on heat (inverted - lower heat = more visible)
+                    const opacity = 1 - (heat / 150) * 0.7; // Range from 1.0 to 0.3
+                    maxCpsDisplay.style.opacity = Math.max(0.3, opacity);
+                } else {
+                    maxCpsDisplay.style.display = 'none';
+                }
             } else {
                 maxCpsDisplay.style.display = 'none';
             }
