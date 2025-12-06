@@ -408,6 +408,14 @@
             resetBtn.addEventListener('click', () => {
                 if (confirm("Are you sure you want to wipe your save?")) {
                     isResetting = true; // Prevent other saves
+
+                    // Preserve lifetime stats before reset
+                    const lifetimeStats = {
+                        totalCookies: state.stats.totalCookies,
+                        totalClicks: state.stats.totalClicks,
+                        startTime: state.stats.startTime
+                    };
+
                     // Explicitly overwrite with default state
                     state = JSON.parse(JSON.stringify(defaultState));
                     // Explicitly reset upgrade counts
@@ -426,11 +434,11 @@
                             state.tech[key].purchased = false;
                         });
                     }
-                    // Explicitly reset stats
+                    // Reset stats but preserve lifetime stats
                     state.stats = {
-                        totalCookies: 0,
-                        totalClicks: 0,
-                        startTime: Date.now(),
+                        totalCookies: lifetimeStats.totalCookies,
+                        totalClicks: lifetimeStats.totalClicks,
+                        startTime: lifetimeStats.startTime,
                         lastSaveTime: Date.now(),
                         history: []
                     };
@@ -1513,6 +1521,9 @@
                 } catch (e) {
                     console.error("Save file corrupted", e);
                 }
+            } else {
+                // First time playing - ensure startTime is set to now
+                state.stats.startTime = Date.now();
             }
         }
 
