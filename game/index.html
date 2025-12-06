@@ -1066,9 +1066,12 @@
                     maxCpsDisplay.style.display = 'block';
                     maxCpsValue.textContent = maxClicksPerSecond;
 
-                    // Opacity based on heat (inverted - lower heat = more visible)
-                    const opacity = 1 - (heat / 150) * 0.7; // Range from 1.0 to 0.3
-                    maxCpsDisplay.style.opacity = Math.max(0.3, opacity);
+                    // Opacity based on heat - fade out as heat goes below 50%
+                    // At 50% heat (75/150) or above: fully visible (opacity 1.0)
+                    // Below 50% heat: fade out linearly to 0
+                    const heatPercent = heat / 150; // 0 to 1 (where 1 = 150 heat)
+                    const opacity = heatPercent >= 0.5 ? 1.0 : (heatPercent / 0.5);
+                    maxCpsDisplay.style.opacity = opacity;
                 } else {
                     maxCpsDisplay.style.display = 'none';
                 }
