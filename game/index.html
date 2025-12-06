@@ -118,7 +118,7 @@
                     ⚠️ Wipe Save Data
                 </button>
                 <p style="font-size: 0.8rem; color: rgba(255,255,255,0.3); margin-top: 2rem; text-align: center;">
-                    Cosmic Clicker v1.2
+                    Cosmic Clicker v1.3
                 </p>
             </div>
         </div>
@@ -235,6 +235,18 @@
                         { cost: 100000, desc: 'Auto-clicks Golden Cookies (5s delay)' },
                         { cost: 500000, desc: 'Auto-clicks Golden Cookies (2s delay)' },
                         { cost: 2500000, desc: 'Instant Auto-click (0.1s delay)' }
+                    ]
+                },
+                infernalMomentum: {
+                    id: 'infernalMomentum',
+                    name: 'Infernal Momentum',
+                    count: 0,
+                    icon: '🌪️',
+                    levels: [
+                        { cost: 2000000, desc: 'Max Momentum Cap: 3x → 6x' },
+                        { cost: 10000000, desc: 'Max Momentum Cap: 6x → 12x' },
+                        { cost: 50000000, desc: 'Max Momentum Cap: 12x → 24x' },
+                        { cost: 250000000, desc: 'Max Momentum Cap: 24x → 48x' }
                     ]
                 }
             },
@@ -1092,9 +1104,13 @@
                 // Gain momentum based on clicking speed
                 // Formula: (clicks/sec / 10) * 0.001 per tick (0.01 per second)
                 // At 10 clicks/sec: +0.01 per second = +0.6 per minute
-                // Cap at 3x multiplier
+                // Cap based on Infernal Momentum upgrade level
+                const baseCap = 3.0;
+                const infernalLevel = state.metaUpgrades.infernalMomentum.count;
+                const momentumCap = baseCap * Math.pow(2, infernalLevel); // 3x, 6x, 12x, 24x, 48x
+
                 const momentumGain = (currentClicksPerSecond / 10) * 0.001;
-                momentumMultiplier = Math.min(3.0, momentumMultiplier + momentumGain);
+                momentumMultiplier = Math.min(momentumCap, momentumMultiplier + momentumGain);
 
                 // Track time at max heat
                 timeAtMaxHeat += 0.1; // 100ms = 0.1 seconds
