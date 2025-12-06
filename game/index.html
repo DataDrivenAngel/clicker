@@ -1409,33 +1409,71 @@
         }
 
         function checkNotifications() {
-            // Tech Notifications
+            // Tech Notifications and Visibility
             let techNotification = false;
+            let techUnlocked = false;
             Object.values(state.tech).forEach(t => {
-                if (!t.purchased && state.score >= t.cost) {
+                if (!t.purchased) {
                     // Check if unlocked
                     const triggerBuilding = state.upgrades[t.trigger.building];
                     if (triggerBuilding && triggerBuilding.count >= t.trigger.count) {
-                        techNotification = true;
+                        techUnlocked = true;
+                        if (state.score >= t.cost) {
+                            techNotification = true;
+                        }
                     }
                 }
             });
-            if (techNotification) tabTech.classList.add('has-notification');
-            else tabTech.classList.remove('has-notification');
 
-            // Meta Notifications
+            // Show/hide Tech tab based on whether any tech is unlocked
+            if (techUnlocked) {
+                tabTech.style.display = 'block';
+                if (techNotification) tabTech.classList.add('has-notification');
+                else tabTech.classList.remove('has-notification');
+            } else {
+                tabTech.style.display = 'none';
+                tabTech.classList.remove('has-notification');
+                // If Tech tab was active, switch to Structures
+                if (tabTech.classList.contains('active')) {
+                    switchTab('structures');
+                }
+            }
+
+            // Meta Notifications and Visibility
             let metaNotification = false;
+            let metaUnlocked = false;
+            let hasMetaPurchased = false;
+
             Object.values(state.metaUpgrades).forEach(u => {
+                if (u.count > 0) {
+                    hasMetaPurchased = true;
+                }
                 const currentLevel = u.count;
                 if (currentLevel < u.levels.length) {
                     const cost = u.levels[currentLevel].cost;
+                    // Only mark as unlocked if player can afford it or has already purchased meta upgrades
+                    if (state.score >= cost || hasMetaPurchased) {
+                        metaUnlocked = true;
+                    }
                     if (state.score >= cost) {
                         metaNotification = true;
                     }
                 }
             });
-            if (metaNotification) tabMeta.classList.add('has-notification');
-            else tabMeta.classList.remove('has-notification');
+
+            // Show/hide Meta tab based on whether any meta upgrade is available
+            if (metaUnlocked) {
+                tabMeta.style.display = 'block';
+                if (metaNotification) tabMeta.classList.add('has-notification');
+                else tabMeta.classList.remove('has-notification');
+            } else {
+                tabMeta.style.display = 'none';
+                tabMeta.classList.remove('has-notification');
+                // If Meta tab was active, switch to Structures
+                if (tabMeta.classList.contains('active')) {
+                    switchTab('structures');
+                }
+            }
         }
 
         // Floating Text Effect
