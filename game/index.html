@@ -149,9 +149,16 @@
             tech: {
                 // Format: id: { name, cost, desc, trigger: { building, count }, effect: { type: 'mult', target, value }, purchased: false }
                 ThumbTrick: { id: 'ThumbTrick', name: 'Weird Thumb Trick', cost: 25, desc: 'Cursor clicks are twice as efficient.', trigger: { building: 'cursor', count: 2 }, effect: { type: 'mult', target: 'cursor', value: 2 }, purchased: false, icon: '👆' },
+                ThumbTrick2: { id: 'ThumbTrick2', name: 'Weird Thumb Trick II', cost: 50, desc: 'Cursor clicks are twice as efficient.', trigger: { building: 'cursor', count: 5 }, effect: { type: 'mult', target: 'cursor', value: 2 }, purchased: false, icon: '👆' },
                 reinforcedIndex: { id: 'reinforcedIndex', name: 'Reinforced Index Finger', cost: 100, desc: 'Cursor clicks are twice as efficient.', trigger: { building: 'cursor', count: 10 }, effect: { type: 'mult', target: 'cursor', value: 2 }, purchased: false, icon: '👆' },
                 carpalTunnel: { id: 'carpalTunnel', name: 'Carpal Tunnel Prevention', cost: 500, desc: 'Cursors are twice as efficient.', trigger: { building: 'cursor', count: 25 }, effect: { type: 'mult', target: 'cursor', value: 2 }, purchased: false, icon: '🧤' },
                 ambidextrous: { id: 'ambidextrous', name: 'Ambidextrous', cost: 10000, desc: 'Cursors are twice as efficient.', trigger: { building: 'cursor', count: 50 }, effect: { type: 'mult', target: 'cursor', value: 2 }, purchased: false, icon: '✌️' },
+                thumbWar: { id: 'thumbWar', name: 'Thumb War Champion', cost: 25000, desc: 'Cursors are twice as efficient.', trigger: { building: 'cursor', count: 75 }, effect: { type: 'mult', target: 'cursor', value: 2 }, purchased: false, icon: '👊' },
+                fingerPuppet: { id: 'fingerPuppet', name: 'Finger Puppet Mastery', cost: 50000, desc: 'Cursors are twice as efficient.', trigger: { building: 'cursor', count: 100 }, effect: { type: 'mult', target: 'cursor', value: 2 }, purchased: false, icon: '🖐️' },
+                magicDisappear: { id: 'magicDisappear', name: 'Failed Magic Disappearing Act', cost: 100000, desc: 'Cursors are twice as efficient.', trigger: { building: 'cursor', count: 150 }, effect: { type: 'mult', target: 'cursor', value: 2 }, purchased: false, icon: '🎩' },
+                rubberFinger: { id: 'rubberFinger', name: 'Rubber Finger Trick', cost: 250000, desc: 'Cursors are twice as efficient.', trigger: { building: 'cursor', count: 200 }, effect: { type: 'mult', target: 'cursor', value: 2 }, purchased: false, icon: '🤏' },
+                fingerSnap: { id: 'fingerSnap', name: 'Finger Snap Illusion', cost: 500000, desc: 'Cursors are twice as efficient.', trigger: { building: 'cursor', count: 250 }, effect: { type: 'mult', target: 'cursor', value: 2 }, purchased: false, icon: '🫰' },
+                thumbPiano: { id: 'thumbPiano', name: 'Thumb Piano Virtuoso', cost: 1000000, desc: 'Cursors are twice as efficient.', trigger: { building: 'cursor', count: 300 }, effect: { type: 'mult', target: 'cursor', value: 2 }, purchased: false, icon: '🎹' },
 
                 lubricatedDentures: { id: 'lubricatedDentures', name: 'Lubricated Dentures', cost: 1000, desc: 'Grandmas are twice as efficient.', trigger: { building: 'grandma', count: 10 }, effect: { type: 'mult', target: 'grandma', value: 2 }, purchased: false, icon: '🦷' },
                 pruneJuice: { id: 'pruneJuice', name: 'Prune Juice', cost: 5000, desc: 'Grandmas are twice as efficient.', trigger: { building: 'grandma', count: 25 }, effect: { type: 'mult', target: 'grandma', value: 2 }, purchased: false, icon: '🥤' },
@@ -251,6 +258,15 @@
                         { cost: 50000000, desc: 'Max Momentum Cap: 12x → 24x' },
                         { cost: 250000000, desc: 'Max Momentum Cap: 24x → 48x' }
                     ]
+                },
+                needForSpeed: {
+                    id: 'needForSpeed',
+                    name: 'Need for Speed',
+                    count: 0,
+                    icon: '🏎️',
+                    levels: [
+                        { cost: 1000, desc: 'Spacebar hotkey on desktop, +2 cookies per click on mobile' }
+                    ]
                 }
             },
             stats: {
@@ -261,7 +277,9 @@
                 history: [] // { timestamp, cookies, cps, upgrades }
             },
             settings: {
-                autoBuyerMode: 'off' // 'off', 'cheapest', 'efficient'
+                autoBuyerMode: 'off', // 'off', 'cheapest', 'efficient'
+                techEverUnlocked: false,
+                metaEverUnlocked: false
             }
         };
 
@@ -405,6 +423,14 @@
             statsBtn.addEventListener('click', showStats);
             statsModal.addEventListener('click', (e) => {
                 if (e.target === statsModal) closeStatsModal();
+            });
+
+            // Spacebar hotkey for Need for Speed
+            document.addEventListener('keydown', (e) => {
+                if (e.key === ' ' && state.metaUpgrades.needForSpeed.count > 0 && !('ontouchstart' in window)) {
+                    e.preventDefault();
+                    cookieBtn.click();
+                }
             });
 
             // Tabs
@@ -760,6 +786,12 @@
                 const currentLevel = u.count;
                 const isMaxed = currentLevel >= u.levels.length;
 
+                // Special unlock condition for Need for Speed
+                if (u.id === 'needForSpeed' && getCPS() < 100) {
+                    el.style.display = 'none';
+                    return;
+                }
+
                 if (isMaxed) {
                     el.classList.add('disabled');
                     el.querySelector('.upgrade-cost').textContent = "Maxed";
@@ -768,6 +800,7 @@
                 } else {
                     const nextCost = u.levels[currentLevel].cost;
                     el.querySelector('.upgrade-cost').textContent = `🍪 ${formatNumber(nextCost)}`;
+
                     el.querySelector('.upgrade-name span').textContent = `Lvl ${currentLevel} → ${currentLevel + 1}`;
 
                     if (state.score >= nextCost) {
@@ -777,7 +810,6 @@
                     }
                 }
             });
-
             // Stats Button Visibility
             if (state.metaUpgrades.analytics.count > 0) {
                 statsBtn.style.display = 'block';
@@ -817,6 +849,11 @@
                 if (frenzyLevel >= 7) {
                     clickPower += 5;
                 }
+            }
+
+            // Need for Speed mobile bonus
+            if (state.metaUpgrades.needForSpeed.count > 0 && 'ontouchstart' in window) {
+                clickPower += 2;
             }
 
             state.score += clickPower;
@@ -1426,8 +1463,10 @@
                 }
             });
 
+            if (techUnlocked) state.settings.techEverUnlocked = true;
+
             // Show/hide Tech tab based on whether any tech is unlocked
-            if (techUnlocked) {
+            if (state.settings.techEverUnlocked) {
                 tabTech.style.display = 'block';
                 if (techNotification) tabTech.classList.add('has-notification');
                 else tabTech.classList.remove('has-notification');
@@ -1462,8 +1501,10 @@
                 }
             });
 
+            if (metaUnlocked) state.settings.metaEverUnlocked = true;
+
             // Show/hide Meta tab based on whether any meta upgrade is available
-            if (metaUnlocked) {
+            if (state.settings.metaEverUnlocked) {
                 tabMeta.style.display = 'block';
                 if (metaNotification) tabMeta.classList.add('has-notification');
                 else tabMeta.classList.remove('has-notification');
