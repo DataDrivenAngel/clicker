@@ -267,6 +267,24 @@
                     levels: [
                         { cost: 1000, desc: 'Spacebar hotkey on desktop, +2 cookies per click on mobile' }
                     ]
+                },
+                autoClicker: {
+                    id: 'autoClicker',
+                    name: 'Auto Clicker',
+                    count: 0,
+                    icon: '🤖',
+                    levels: [
+                        { cost: 5000, desc: 'Auto-clicks every 10 seconds' },
+                        { cost: 10000, desc: 'Auto-clicks every 5 seconds' },
+                        { cost: 25000, desc: 'Auto-clicks every 2.5 seconds' },
+                        { cost: 50000, desc: 'Auto-clicks every 1.25 seconds' },
+                        { cost: 100000, desc: 'Auto-clicks every 0.625 seconds' },
+                        { cost: 250000, desc: 'Auto-clicks every 0.3125 seconds' },
+                        { cost: 500000, desc: 'Auto-clicks every 0.15625 seconds' },
+                        { cost: 1000000, desc: 'Auto-clicks every 0.078125 seconds' },
+                        { cost: 2500000, desc: 'Auto-clicks every 0.039 seconds' },
+                        { cost: 5000000, desc: 'Auto-clicks twice per second' }
+                    ]
                 }
             },
             stats: {
@@ -282,6 +300,9 @@
                 metaEverUnlocked: false
             }
         };
+
+        // Auto Clicker intervals in milliseconds for each level (1-10)
+        const autoClickerIntervals = [10000, 5000, 2500, 1250, 625, 312, 156, 78, 39, 500];
 
         // Fix: Deep copy defaultState to avoid mutation
         let state = JSON.parse(JSON.stringify(defaultState));
@@ -304,6 +325,9 @@
         // Momentum tracking (Level 8)
         let momentumMultiplier = 1.0; // CPS multiplier from momentum
         let timeAtMaxHeat = 0; // Time spent at max heat in seconds
+
+        // Auto Clicker
+        let autoClickerInterval = null;
 
         // DOM Elements
         const scoreEl = document.getElementById('score');
@@ -429,7 +453,11 @@
             document.addEventListener('keydown', (e) => {
                 if (e.key === ' ' && state.metaUpgrades.needForSpeed.count > 0 && !('ontouchstart' in window)) {
                     e.preventDefault();
-                    cookieBtn.click();
+                    console.log("Spacebar pressed - triggering click");
+                    const rect = cookieBtn.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    performClick(centerX, centerY);
                 }
             });
 
@@ -449,6 +477,12 @@
             resetBtn.addEventListener('click', () => {
                 if (confirm("Are you sure you want to wipe your save?")) {
                     isResetting = true; // Prevent other saves
+
+                    // Clear auto clicker interval
+                    if (autoClickerInterval) {
+                        clearInterval(autoClickerInterval);
+                        autoClickerInterval = null;
+                    }
 
                     // Preserve lifetime stats before reset
                     const lifetimeStats = {
@@ -673,7 +707,8 @@
         // Create Meta List
         function createMetaList() {
             metaList.innerHTML = '';
-            Object.values(state.metaUpgrades).forEach(u => {
+            const sortedMeta = Object.values(state.metaUpgrades).sort((a, b) => a.levels[0].cost - b.levels[0].cost);
+            sortedMeta.forEach(u => {
                 const item = document.createElement('div');
                 item.className = 'upgrade-item';
                 item.id = `meta-${u.id}`;
@@ -792,6 +827,12 @@
                     return;
                 }
 
+                // Special unlock condition for Auto Clicker
+                if (u.id === 'autoClicker' && state.stats.totalClicks < 500) {
+                    el.style.display = 'none';
+                    return;
+                }
+
                 if (isMaxed) {
                     el.classList.add('disabled');
                     el.querySelector('.upgrade-cost').textContent = "Maxed";
@@ -817,7 +858,7 @@
         }
 
         // Core Logic: Click Cookie
-        cookieBtn.addEventListener('mousedown', (e) => {
+        function performClick(x, y) {
             // Heat Logic
             if (state.metaUpgrades.clickFrenzy.count > 0) {
                 const frenzyLevel = state.metaUpgrades.clickFrenzy.count;
@@ -869,8 +910,12 @@
             updateUI();
 
             const text = (clickPower > 1) ? `+${clickPower} 🔥` : "+1";
-            spawnFloatingText(e.clientX, e.clientY, text);
-            createParticles(e.clientX, e.clientY);
+            spawnFloatingText(x, y, text);
+            createParticles(x, y);
+        }
+
+        cookieBtn.addEventListener('mousedown', (e) => {
+            performClick(e.clientX, e.clientY);
         });
 
         // Core Logic: Buy Upgrade
@@ -894,6 +939,19 @@
                 if (state.score >= cost) {
                     state.score -= cost;
                     u.count++;
+                    // Update auto clicker interval if purchased
+                    if (id === 'autoClicker') {
+                        if (autoClickerInterval) {
+                            clearInterval(autoClickerInterval);
+                        }
+                        const interval = autoClickerIntervals[u.count - 1];
+                        autoClickerInterval = setInterval(() => {
+                            const rect = cookieBtn.getBoundingClientRect();
+                            const centerX = rect.left + rect.width / 2;
+                            const centerY = rect.top + rect.height / 2;
+                            performClick(centerX, centerY);
+                        }, interval);
+                    }
                     updateUI();
                     createMetaList(); // Re-render to update next level info
                 }
@@ -1622,6 +1680,17 @@
                             }
                         });
                     }
+
+                    // Start auto clicker if purchased
+                    if (state.metaUpgrades.autoClicker && state.metaUpgrades.autoClicker.count > 0) {
+                        const interval = autoClickerIntervals[state.metaUpgrades.autoClicker.count - 1];
+                        autoClickerInterval = setInterval(() => {
+                            const rect = cookieBtn.getBoundingClientRect();
+                            const centerX = rect.left + rect.width / 2;
+                            const centerY = rect.top + rect.height / 2;
+                            performClick(centerX, centerY);
+                        }, interval);
+                    }
                 } catch (e) {
                     console.error("Save file corrupted", e);
                 }
@@ -1638,7 +1707,16 @@
         function showTooltip(id, x, y) {
             const u = state.upgrades[id];
             const cost = getCost(id);
-            const totalCps = u.cps * u.count;
+            let totalCps = u.cps * u.count;
+
+            // Apply Tech Multipliers for this building
+            let multiplier = 1;
+            Object.values(state.tech).forEach(t => {
+                if (t.purchased && t.effect.type === 'mult' && t.effect.target === u.id) {
+                    multiplier *= t.effect.value;
+                }
+            });
+            totalCps *= multiplier;
 
             // Advanced Analytics
             const analyticsLevel = state.metaUpgrades.analytics.count;
@@ -1667,7 +1745,7 @@
             tooltip.innerHTML = `
                 <div class="tooltip-header">${u.name}</div>
                 <div class="tooltip-stat">Cost: <span>🍪 ${formatNumber(cost)}</span></div>
-                <div class="tooltip-stat">CPS: <span>${formatCPS(u.cps)}</span></div>
+                <div class="tooltip-stat">CPS: <span>${formatCPS(u.cps * multiplier)}</span></div>
                 <div class="tooltip-stat">Owned: <span>${u.count}</span></div>
                 <div class="tooltip-stat">Total CPS: <span>${formatCPS(totalCps)}</span></div>
                 ${extraStats}
