@@ -604,6 +604,10 @@ body {
     /* Keep numbers at consistent width */
     animation: none;
     /* Prevent vibration */
+    transform: translateZ(0);
+    /* Force hardware acceleration to prevent shaking */
+    backface-visibility: hidden;
+    /* Prevent rendering issues */
 }
 
 .heat-container.active .heat-text {
