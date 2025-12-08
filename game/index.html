@@ -333,10 +333,10 @@
                     count: 0,
                     icon: '🌪️',
                     levels: [
-                        { cost: 2000000, desc: 'Max Momentum Cap: 3x → 6x' },
-                        { cost: 10000000, desc: 'Max Momentum Cap: 6x → 12x' },
-                        { cost: 50000000, desc: 'Max Momentum Cap: 12x → 24x' },
-                        { cost: 250000000, desc: 'Max Momentum Cap: 24x → 48x' }
+                        { cost: 2000000, desc: 'Max Click Frenzy Momentum Cap: 3x → 6x' },
+                        { cost: 10000000, desc: 'Max Click Frenzy Momentum Cap: 6x → 12x' },
+                        { cost: 50000000, desc: 'Max Click Frenzy Momentum Cap: 12x → 24x' },
+                        { cost: 250000000, desc: 'Max Click Frenzy Momentum Cap: 24x → 48x' }
                     ]
                 },
                 needForSpeed: {
@@ -355,15 +355,15 @@
                     icon: '🤖',
                     levels: [
                         { cost: 5000, desc: 'Auto-clicks every 10 seconds' },
-                        { cost: 10000, desc: 'Auto-clicks every 5 seconds' },
-                        { cost: 25000, desc: 'Auto-clicks every 2.5 seconds' },
-                        { cost: 50000, desc: 'Auto-clicks every 1.25 seconds' },
-                        { cost: 100000, desc: 'Auto-clicks every 0.625 seconds' },
-                        { cost: 250000, desc: 'Auto-clicks every 0.3125 seconds' },
-                        { cost: 500000, desc: 'Auto-clicks every 0.15625 seconds' },
-                        { cost: 1000000, desc: 'Auto-clicks every 0.078125 seconds' },
-                        { cost: 2500000, desc: 'Auto-clicks every 0.039 seconds' },
-                        { cost: 5000000, desc: 'Auto-clicks twice per second' }
+                        { cost: 10000, desc: 'Auto-clicks every 7.5 seconds' },
+                        { cost: 25000, desc: 'Auto-clicks every 5 seconds' },
+                        { cost: 50000, desc: 'Auto-clicks every 2.5 seconds' },
+                        { cost: 100000, desc: 'Auto-clicks every 2 seconds' },
+                        { cost: 250000, desc: 'Auto-clicks every 1 seconds' },
+                        { cost: 500000, desc: 'Auto-clicks every .75 seconds' },
+                        { cost: 1000000, desc: 'Auto-clicks every 0.5 seconds' },
+                        { cost: 2500000, desc: 'Auto-clicks every 0.25 seconds' },
+                        { cost: 5000000, desc: 'Auto-clicks ten times per second' }
                     ]
                 }
             },
@@ -376,18 +376,19 @@
             },
             settings: {
                 autoBuyerMode: 'off', // 'off', 'cheapest', 'efficient'
+                autoClickerMode: 'on', // 'off', 'on'
                 techEverUnlocked: false,
                 metaEverUnlocked: false
             }
         };
 
         // Auto Clicker intervals in milliseconds for each level (1-10)
-        const autoClickerIntervals = [10000, 5000, 2500, 1250, 625, 312, 156, 78, 39, 500];
+        const autoClickerIntervals = [10000, 7500, 5000, 2500, 2000, 1000, 750, 500, 250, 100];
 
         // Fix: Deep copy defaultState to avoid mutation
         let state = JSON.parse(JSON.stringify(defaultState));
         // Ensure settings exist if loading from old save
-        if (!state.settings) state.settings = { autoBuyerMode: 'off' };
+        if (!state.settings) state.settings = { autoBuyerMode: 'off', autoClickerMode: 'on' };
         // Ensure tech exists if loading from old save
         if (!state.tech) state.tech = JSON.parse(JSON.stringify(defaultState.tech));
         // Ensure new buildings exist
@@ -818,6 +819,19 @@
                         </div>
                     `;
                 }
+                if (u.id === 'autoClicker' && currentLevel > 0) {
+                    const mode = state.settings.autoClickerMode || 'on';
+                    let modeColor = '#ef4444'; // Red for OFF
+                    if (mode === 'on') modeColor = '#22c55e'; // Green for ON
+
+                    toggleHtml = `
+                        <div class="toggle-container" onclick="event.stopPropagation()">
+                            <button id="autoClickerBtn" class="tab-btn" aria-label="Toggle auto clicker mode, current mode: ${mode}" style="background: rgba(255,255,255,0.1); border-color: ${modeColor}; color: ${modeColor}; font-size: 0.8rem; padding: 0.2rem 0.5rem;">
+                                Mode: ${mode.toUpperCase()}
+                            </button>
+                        </div>
+                    `;
+                }
 
                 item.innerHTML = `
                     <div class="upgrade-icon">${u.icon}</div>
@@ -851,6 +865,15 @@
                         btn.addEventListener('click', (e) => {
                             e.stopPropagation();
                             cycleAutoBuyerMode();
+                        });
+                    }
+                }
+                if (u.id === 'autoClicker' && currentLevel > 0) {
+                    const btn = document.getElementById('autoClickerBtn');
+                    if (btn) {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            cycleAutoClickerMode();
                         });
                     }
                 }
@@ -1023,14 +1046,17 @@
                     if (id === 'autoClicker') {
                         if (autoClickerInterval) {
                             clearInterval(autoClickerInterval);
+                            autoClickerInterval = null;
                         }
-                        const interval = autoClickerIntervals[u.count - 1];
-                        autoClickerInterval = setInterval(() => {
-                            const rect = cookieBtn.getBoundingClientRect();
-                            const centerX = rect.left + rect.width / 2;
-                            const centerY = rect.top + rect.height / 2;
-                            performClick(centerX, centerY);
-                        }, interval);
+                        if (state.settings.autoClickerMode === 'on') {
+                            const interval = autoClickerIntervals[u.count - 1];
+                            autoClickerInterval = setInterval(() => {
+                                const rect = cookieBtn.getBoundingClientRect();
+                                const centerX = rect.left + rect.width / 2;
+                                const centerY = rect.top + rect.height / 2;
+                                performClick(centerX, centerY);
+                            }, interval);
+                        }
                     }
                     updateUI();
                     createMetaList(); // Re-render to update next level info
@@ -1050,6 +1076,36 @@
 
             const nextIdx = (currentIdx + 1) % modes.length;
             state.settings.autoBuyerMode = modes[nextIdx];
+
+            createMetaList(); // Re-render button
+            saveGame();
+        }
+
+        function cycleAutoClickerMode() {
+            const modes = ['off', 'on'];
+            let currentIdx = modes.indexOf(state.settings.autoClickerMode);
+            if (currentIdx === -1) currentIdx = 0;
+
+            const nextIdx = (currentIdx + 1) % modes.length;
+            state.settings.autoClickerMode = modes[nextIdx];
+
+            // Start or stop auto clicker based on mode
+            if (state.settings.autoClickerMode === 'on' && state.metaUpgrades.autoClicker.count > 0) {
+                if (!autoClickerInterval) {
+                    const interval = autoClickerIntervals[state.metaUpgrades.autoClicker.count - 1];
+                    autoClickerInterval = setInterval(() => {
+                        const rect = cookieBtn.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+                        performClick(centerX, centerY);
+                    }, interval);
+                }
+            } else {
+                if (autoClickerInterval) {
+                    clearInterval(autoClickerInterval);
+                    autoClickerInterval = null;
+                }
+            }
 
             createMetaList(); // Re-render button
             saveGame();
@@ -1744,6 +1800,7 @@
                         delete state.settings.autoBuyerEnabled;
                     }
                     if (!state.settings.autoBuyerMode) state.settings.autoBuyerMode = 'off';
+                    if (!state.settings.autoClickerMode) state.settings.autoClickerMode = 'on';
 
                     // Fix: Restore upgrade counts carefully
                     Object.keys(parsed.upgrades).forEach(key => {
@@ -1761,8 +1818,8 @@
                         });
                     }
 
-                    // Start auto clicker if purchased
-                    if (state.metaUpgrades.autoClicker && state.metaUpgrades.autoClicker.count > 0) {
+                    // Start auto clicker if purchased and enabled
+                    if (state.metaUpgrades.autoClicker && state.metaUpgrades.autoClicker.count > 0 && state.settings.autoClickerMode === 'on') {
                         const interval = autoClickerIntervals[state.metaUpgrades.autoClicker.count - 1];
                         autoClickerInterval = setInterval(() => {
                             const rect = cookieBtn.getBoundingClientRect();
