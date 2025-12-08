@@ -299,7 +299,11 @@
                         { cost: 10000, desc: 'Inferno Mode: +10% CPS at Max Heat' },
                         { cost: 50000, desc: 'Chain Reaction: Clicks sustain heat at max' },
                         { cost: 250000, desc: 'Blazing Strikes: +5 cookies per click at Max Heat' },
-                        { cost: 1000000, desc: 'Momentum: CPS multiplier grows with clicking speed at max heat' }
+                        { cost: 1000000, desc: 'Momentum: CPS multiplier grows with clicking speed at max heat' },
+                        { cost: 5000000, desc: 'Accelerated Momentum: Momentum builds 2x faster' },
+                        { cost: 25000000, desc: 'Turbo Momentum: Momentum builds 3x faster' },
+                        { cost: 100000000, desc: 'Hyper Momentum: Momentum builds 4x faster' },
+                        { cost: 500000000, desc: 'Ultimate Momentum: Momentum builds 5x faster' }
                     ]
                 },
                 timeWarp: {
@@ -319,9 +323,12 @@
                     count: 0,
                     icon: '🍀',
                     levels: [
-                        { cost: 5000, desc: 'Golden Cookies spawn (15 minutes of Cookies Per Second reward)' },
-                        { cost: 25000, desc: 'Double Reward (30m CPS)' },
-                        { cost: 100000, desc: 'Double Spawn Rate' }
+                        { cost: 5000, desc: 'Golden Cookies spawn (100,000 cookie reward)' },
+                        { cost: 25000, desc: 'Double Reward (200,000 cookies)' },
+                        { cost: 100000, desc: 'Double Spawn Rate' },
+                        { cost: 500000, desc: 'Triple Reward (500,000 cookies)' },
+                        { cost: 2500000, desc: 'Quadruple Spawn Rate' },
+                        { cost: 10000000, desc: '1 Million Reward' }
                     ]
                 },
                 goldenNet: {
@@ -344,7 +351,11 @@
                         { cost: 2000000, desc: 'Max Click Frenzy Momentum Cap: 3x → 6x' },
                         { cost: 10000000, desc: 'Max Click Frenzy Momentum Cap: 6x → 12x' },
                         { cost: 50000000, desc: 'Max Click Frenzy Momentum Cap: 12x → 24x' },
-                        { cost: 250000000, desc: 'Max Click Frenzy Momentum Cap: 24x → 48x' }
+                        { cost: 250000000, desc: 'Max Click Frenzy Momentum Cap: 24x → 48x' },
+                        { cost: 1000000000, desc: 'Max Click Frenzy Momentum Cap: 48x → 96x' },
+                        { cost: 5000000000, desc: 'Max Click Frenzy Momentum Cap: 96x → 192x' },
+                        { cost: 25000000000, desc: 'Max Click Frenzy Momentum Cap: 192x → 384x' },
+                        { cost: 100000000000, desc: 'Max Click Frenzy Momentum Cap: 384x → 768x' }
                     ]
                 },
                 needForSpeed: {
@@ -944,6 +955,12 @@
                     return;
                 }
 
+                // Special unlock condition for Click Frenzy levels 9+
+                if (u.id === 'clickFrenzy' && !isMaxed && currentLevel + 1 > 8 && state.metaUpgrades.infernalMomentum.count < 4) {
+                    el.style.display = 'none';
+                    return;
+                }
+
                 if (isMaxed) {
                     el.classList.add('disabled');
                     el.querySelector('.upgrade-cost').textContent = "Maxed";
@@ -1020,9 +1037,24 @@
 
             updateUI();
 
+            // Calculate angle based on heat for both text and particles
+            let clickAngle;
+            if (heat <= 100) {
+                // Always upward: from 45° to 135° (π/4 to 3π/4)
+                const minAngle = Math.PI / 4;
+                const maxAngle = 3 * Math.PI / 4;
+                const spread = (heat / 100) * (maxAngle - minAngle);
+                clickAngle = minAngle + Math.random() * spread;
+            } else {
+                // Rising vertically: from 20° to 160° (centered around 90° up)
+                const minAngle = 20 * Math.PI / 180;
+                const maxAngle = 160 * Math.PI / 180;
+                clickAngle = minAngle + Math.random() * (maxAngle - minAngle);
+            }
+
             const text = (clickPower > 1) ? `+${clickPower} 🔥` : "+1";
-            spawnFloatingText(x, y, text);
-            createParticles(x, y);
+            spawnFloatingText(x, y, text, clickAngle, momentumMultiplier);
+            createParticles(x, y, clickAngle, momentumMultiplier);
         }
 
         cookieBtn.addEventListener('mousedown', (e) => {
@@ -1354,7 +1386,15 @@
                 const infernalLevel = state.metaUpgrades.infernalMomentum.count;
                 const momentumCap = baseCap * Math.pow(2, infernalLevel); // 3x, 6x, 12x, 24x, 48x
 
-                const momentumGain = (currentClicksPerSecond / 10) * 0.001;
+                let momentumGain = (currentClicksPerSecond / 10) * 0.001;
+
+                // Apply momentum rate multiplier from Click Frenzy levels 9+
+                let momentumMultiplierRate = 1;
+                if (state.metaUpgrades.clickFrenzy.count >= 9) {
+                    momentumMultiplierRate = state.metaUpgrades.clickFrenzy.count - 7; // 2x at level 9, up to 5x at level 12
+                }
+                momentumGain *= momentumMultiplierRate;
+
                 momentumMultiplier = Math.min(momentumCap, momentumMultiplier + momentumGain);
 
                 // Track time at max heat
@@ -1372,9 +1412,12 @@
             const level = state.metaUpgrades.luckyClover.count;
             if (level === 0) return;
 
-            // Base chance: 1% per second (~1.6 mins)
+            // Base chance: 1% per second
             // Level 3: Double chance (2%)
-            const chance = (level >= 3) ? 0.02 : 0.01;
+            // Level 5: Quadruple chance (4%)
+            let chance = 0.01;
+            if (level >= 3) chance = 0.02;
+            if (level >= 5) chance = 0.04;
 
             if (Math.random() < chance && !document.querySelector('.golden-cookie')) {
                 spawnGoldenCookie();
@@ -1391,11 +1434,10 @@
             el.onclick = (e) => {
                 e.stopPropagation();
                 const level = state.metaUpgrades.luckyClover.count;
-                const cps = getCPS();
-                // Reward: 15 mins of CPS (900s) or 30 mins (1800s)
-                const seconds = (level >= 2) ? 1800 : 900;
-                // Min reward 100 cookies if CPS is low
-                const reward = Math.max(100, cps * seconds);
+                let reward = 100000;
+                if (level >= 2) reward = 200000;
+                if (level >= 4) reward = 500000;
+                if (level >= 6) reward = 1000000;
 
                 state.score += reward;
                 state.stats.totalCookies += reward;
@@ -1805,18 +1847,31 @@
         }
 
         // Floating Text Effect
-        function spawnFloatingText(x, y, text) {
+        function spawnFloatingText(x, y, text, angle, momentumMultiplier) {
             const el = document.createElement('div');
             el.className = 'floating-text';
             el.textContent = text;
             el.style.left = `${x}px`;
             el.style.top = `${y}px`;
             document.body.appendChild(el);
-            setTimeout(() => el.remove(), 1000);
+
+            const velocity = 40 * momentumMultiplier; // Velocity increases with momentum
+            const tx = Math.cos(angle) * velocity;
+            const ty = -Math.sin(angle) * velocity * momentumMultiplier; // Amplified vertical momentum for pillar effect
+
+            const finalScale = 1 + momentumMultiplier * 0.4; // Scale increases faster than momentum
+
+            el.animate([
+                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                { transform: `translate(${tx}px, ${ty}px) scale(${finalScale})`, opacity: 0 }
+            ], {
+                duration: 1000,
+                easing: 'ease-out'
+            }).onfinish = () => el.remove();
         }
 
         // Particle Effect
-        function createParticles(x, y) {
+        function createParticles(x, y, baseAngle, momentumMultiplier) {
             for (let i = 0; i < 6; i++) {
                 const p = document.createElement('div');
                 p.className = 'particle';
@@ -1828,10 +1883,13 @@
                 p.style.left = `${x}px`;
                 p.style.top = `${y}px`;
 
-                const angle = Math.random() * Math.PI * 2;
-                const velocity = Math.random() * 50 + 20;
+                // Use base angle with small random variation for scattering effect
+                const angleVariation = (Math.random() - 0.5) * 0.3; // ±0.3 radians (~17°) variation
+                const angle = baseAngle + angleVariation;
+
+                const velocity = (Math.random() * 50 + 20) * momentumMultiplier; // Velocity increases with momentum
                 const tx = Math.cos(angle) * velocity;
-                const ty = Math.sin(angle) * velocity;
+                const ty = -Math.sin(angle) * velocity; // Negative to move upward in screen coordinates
 
                 p.animate([
                     { transform: 'translate(0, 0)', opacity: 1 },
