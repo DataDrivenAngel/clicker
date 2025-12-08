@@ -94,6 +94,7 @@
                         <button class="chart-filter-btn" data-filter="15min">Last 15 Min</button>
                         <button class="chart-filter-btn" data-filter="1min">Last Minute</button>
                     </div>
+                    <div id="seriesFilters" style="display: none; margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
                     <canvas id="statsChart"></canvas>
                 </div>
             </div>
@@ -1460,6 +1461,9 @@
         let statsChart = null;
         let statsInterval = null;
         let currentChartFilter = 'all';
+        let showCookies = true;
+        let showCPS = true;
+        let showUpgrades = true;
 
         function recordAnalyticsData() {
             // Only record if we have Analytics Lvl 4 unlocked
@@ -1523,6 +1527,44 @@
                 }
             });
 
+            // Series Filters
+            const seriesFilters = document.getElementById('seriesFilters');
+            seriesFilters.innerHTML = '';
+            if (analyticsLevel >= 2) {
+                const cookiesBtn = document.createElement('button');
+                cookiesBtn.className = 'chart-filter-btn' + (showCookies ? ' active' : '');
+                cookiesBtn.dataset.series = 'cookies';
+                cookiesBtn.textContent = 'Cookies';
+                seriesFilters.appendChild(cookiesBtn);
+            }
+            if (analyticsLevel >= 3) {
+                const cpsBtn = document.createElement('button');
+                cpsBtn.className = 'chart-filter-btn' + (showCPS ? ' active' : '');
+                cpsBtn.dataset.series = 'cps';
+                cpsBtn.textContent = 'CPS';
+                seriesFilters.appendChild(cpsBtn);
+            }
+            if (analyticsLevel >= 6) {
+                const upgradesBtn = document.createElement('button');
+                upgradesBtn.className = 'chart-filter-btn' + (showUpgrades ? ' active' : '');
+                upgradesBtn.dataset.series = 'upgrades';
+                upgradesBtn.textContent = 'Upgrades';
+                seriesFilters.appendChild(upgradesBtn);
+            }
+
+            // Add event listeners for series filters
+            const seriesBtns = seriesFilters.querySelectorAll('.chart-filter-btn');
+            seriesBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const series = e.target.dataset.series;
+                    if (series === 'cookies') showCookies = !showCookies;
+                    else if (series === 'cps') showCPS = !showCPS;
+                    else if (series === 'upgrades') showUpgrades = !showUpgrades;
+                    e.target.classList.toggle('active');
+                    renderChart();
+                });
+            });
+
             // Live Update Loop
             if (statsInterval) clearInterval(statsInterval);
             statsInterval = setInterval(() => {
@@ -1565,9 +1607,11 @@
             if (analyticsLevel >= 2) {
                 statsChartContainer.style.display = 'block';
                 chartFilters.style.display = 'flex';
+                seriesFilters.style.display = 'flex';
             } else {
                 statsChartContainer.style.display = 'none';
                 chartFilters.style.display = 'none';
+                seriesFilters.style.display = 'none';
             }
         }
 
@@ -1603,7 +1647,7 @@
             const datasets = [];
 
             // Level 2: Cookies
-            if (level >= 2) {
+            if (level >= 2 && showCookies) {
                 datasets.push({
                     label: 'Cookies',
                     data: cookiesData,
@@ -1614,7 +1658,7 @@
             }
 
             // Level 3: CPS
-            if (level >= 3) {
+            if (level >= 3 && showCPS) {
                 datasets.push({
                     label: 'CPS',
                     data: cpsData,
@@ -1625,7 +1669,7 @@
             }
 
             // Level 6: Upgrades
-            if (level >= 6) {
+            if (level >= 6 && showUpgrades) {
                 datasets.push({
                     label: 'Upgrades',
                     data: upgradesData,
