@@ -789,3 +789,35 @@ input:checked+.slider:before {
 .chart-filter-btn:hover {
     background: rgba(255, 255, 255, 0.1);
 }
+
+/* Weeping Willow Effect */
+.willow-particle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1001;
+    filter: drop-shadow(0 0 5px gold);
+}
+
+.willow-cookie {
+    font-size: 1.5rem;
+    position: absolute;
+}
+
+.willow-trail {
+    position: absolute;
+    width: 3px;
+    background: linear-gradient(to bottom, rgba(251, 191, 36, 0.8), transparent);
+    border-radius: 3px;
+    transform-origin: top center;
+}
+
+@keyframes willow-fall {
+    0% {
+        transform: translateY(0) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) scale(0.5) rotate(360deg);
+        opacity: 0;
+    }
+}
