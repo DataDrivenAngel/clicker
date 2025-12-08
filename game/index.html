@@ -564,10 +564,16 @@
             checkOfflineEarnings();
 
             // Analytics Data Recording (Every 5s)
+            recordAnalyticsData(); // Record initial data point immediately
             setInterval(recordAnalyticsData, 5000);
 
             // Fix: Save on exit
             window.addEventListener('beforeunload', saveGame);
+
+            // Start opening animation after everything is loaded
+            setTimeout(() => {
+                createOpeningAnimation();
+            }, 500); // Delay by 1 second to ensure page is fully loaded
 
             // Event Listeners
             closeStats.addEventListener('click', closeStatsModal);
@@ -1673,7 +1679,7 @@
         let statsChart = null;
         let accuracyChart = null;
         let statsInterval = null;
-        let currentChartFilter = 'all';
+        let currentChartFilter = '1min';
         let showCookies = true;
         let showCPS = true;
         let showUpgrades = true;
@@ -1721,6 +1727,9 @@
         }
 
         function showStats() {
+            // Record fresh data point when opening stats
+            recordAnalyticsData();
+            
             updateStatsContent();
             statsModal.classList.add('active');
 
@@ -2191,6 +2200,43 @@
                     easing: 'ease-out'
                 }).onfinish = () => p.remove();
             }
+        }
+
+        // Opening Animation: Hand Emoji Clicks Cookie
+        function createOpeningAnimation() {
+            const hand = document.createElement('div');
+            hand.className = 'opening-hand';
+            hand.textContent = '👆';
+            document.body.appendChild(hand);
+
+            // Get cookie position
+            const cookieRect = cookieBtn.getBoundingClientRect();
+            const centerX = cookieRect.left + cookieRect.width / 2;
+            const centerY = cookieRect.top + cookieRect.height / 2;
+
+            // Set initial position (offscreen left)
+            hand.style.left = '-100px';
+            hand.style.top = `${centerY}px`;
+
+            // Trigger the click when the hand performs the click animation (at 80% of animation)
+            setTimeout(() => {
+                const rect = cookieBtn.getBoundingClientRect();
+                const clickX = rect.left + rect.width / 2;
+                const clickY = rect.top + rect.height / 2;
+                performClick(clickX, clickY);
+                
+                // Add a slight shake effect to the cookie for impact
+                cookieBtn.style.animation = 'none';
+                cookieBtn.offsetHeight; // Trigger reflow
+                cookieBtn.style.animation = 'cookieClickImpact 0.3s ease-out';
+            }, 1200); 
+
+            // Remove hand after animation completes
+            setTimeout(() => {
+                if (hand.parentNode) {
+                    hand.remove();
+                }
+            }, 4000);
         }
 
         // Weeping Willow Effect for Golden Cookies
