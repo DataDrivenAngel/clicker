@@ -97,6 +97,10 @@
                     <div id="seriesFilters" style="display: none; margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
                     <canvas id="statsChart"></canvas>
                 </div>
+                <div id="accuracyChartContainer" style="display: none; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <h3 style="color: rgba(255,255,255,0.7); margin-bottom: 1rem; font-size: 1.2rem;">Auto-Click Accuracy</h3>
+                    <canvas id="accuracyChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -271,7 +275,8 @@
                         { cost: 2000, desc: 'Shows Efficiency (CPS/Cost) (History: 400)' },
                         { cost: 5000, desc: 'Shows Time-to-Wait (History: 800)' },
                         { cost: 7500, desc: 'Unlocks Chart: Upgrades (History: 1200)' },
-                        { cost: 15000, desc: 'Extended History (History: 3000)' }
+                        { cost: 15000, desc: 'Extended History (History: 3000)' },
+                        { cost: 25000, desc: 'Unlocks Chart: Accuracy % (History: 5000)' }
                     ]
                 },
                 autoBuyer: {
@@ -384,6 +389,23 @@
                         { cost: 2500000, desc: 'Auto-clicks every 0.25 seconds' },
                         { cost: 5000000, desc: 'Auto-clicks ten times per second' }
                     ]
+                },
+                autoClickPrecision: {
+                    id: 'autoClickPrecision',
+                    name: 'Auto Click Precision',
+                    count: 0,
+                    icon: '🎯',
+                    levels: [
+                        { cost: 200000000, desc: 'Reduces click inaccuracy by 20%' },
+                        { cost: 1000000000, desc: 'Reduces click inaccuracy by 40%' },
+                        { cost: 5000000000, desc: 'Reduces click inaccuracy by 60%' },
+                        { cost: 25000000000, desc: 'Reduces click inaccuracy by 80%' },
+                        { cost: 100000000000, desc: 'Perfect accuracy below 50x momentum' },
+                        { cost: 500000000000, desc: 'Perfect accuracy below 100x momentum' },
+                        { cost: 2500000000000, desc: 'Perfect accuracy below 200x momentum' },
+                        { cost: 10000000000000, desc: 'Perfect accuracy below 400x momentum' },
+                        { cost: 50000000000000, desc: 'Perfect accuracy at all momentum levels' }
+                    ]
                 }
             },
             stats: {
@@ -428,6 +450,11 @@
 
         // Auto Clicker
         let autoClickerInterval = null;
+
+        // Click Precision Tracking
+        let lastClickWasMiss = false;
+        let totalMissedClicks = 0;
+        let totalAutoClicks = 0; // Track total auto clicks separately
 
         // DOM Elements
         const scoreEl = document.getElementById('score');
@@ -961,6 +988,12 @@
                     return;
                 }
 
+                // Special unlock condition for Analytics level 8
+                if (u.id === 'analytics' && !isMaxed && currentLevel + 1 > 7 && totalMissedClicks === 0) {
+                    el.style.display = 'none';
+                    return;
+                }
+
                 if (isMaxed) {
                     el.classList.add('disabled');
                     el.querySelector('.upgrade-cost').textContent = "Maxed";
@@ -986,7 +1019,79 @@
         }
 
         // Core Logic: Click Cookie
-        function performClick(x, y) {
+        function performClick(x, y, isAutoClick = false) {
+            // Check if click hits the cookie
+            const rect = cookieBtn.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const radius = rect.width / 2;
+            
+            // Calculate distance from center
+            const dx = x - centerX;
+            const dy = y - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Calculate inaccuracy based on heat and momentum
+            let inaccuracyFactor = 0;
+            if (state.metaUpgrades.clickFrenzy.count >= 8 && (heat >= 100 || momentumMultiplier > 1.5)) {
+                // Base inaccuracy increases with momentum and time at max heat
+                const momentumInaccuracy = (momentumMultiplier - 1) * 0.3; // 30% per momentum level
+                const heatInaccuracy = (heat / 150) * 0.2; // Up to 20% from heat
+                inaccuracyFactor = momentumInaccuracy + heatInaccuracy;
+                
+                // Add speed-based inaccuracy from auto clicker
+                if (state.metaUpgrades.autoClicker.count > 0) {
+                    const clickerLevel = state.metaUpgrades.autoClicker.count;
+                    const interval = autoClickerIntervals[clickerLevel - 1];
+                    
+                    // Speed multiplier: increases dramatically below 1000ms
+                    let speedMultiplier = 1.0;
+                    if (interval <= 1000) {
+                        // Below 1000ms: exponential increase
+                        // 1000ms = 2x, 750ms = 3x, 500ms = 5x, 250ms = 9x, 100ms = 15x
+                        speedMultiplier = 1 + (1000 - interval) / 100;
+                    } else {
+                        // Above 1000ms: minimal scaling
+                        speedMultiplier = 1.0 + (10000 - interval) / 50000;
+                    }
+                    
+                    inaccuracyFactor *= speedMultiplier;
+                }
+                
+                // Apply precision upgrades to reduce inaccuracy
+                const precisionLevel = state.metaUpgrades.autoClickPrecision.count;
+                if (precisionLevel >= 1) inaccuracyFactor *= 0.8; // -20%
+                if (precisionLevel >= 2) inaccuracyFactor *= 0.75; // -40% total
+                if (precisionLevel >= 3) inaccuracyFactor *= 0.67; // -60% total
+                if (precisionLevel >= 4) inaccuracyFactor *= 0.5; // -80% total
+                if (precisionLevel >= 5 && momentumMultiplier < 50) inaccuracyFactor = 0;
+                if (precisionLevel >= 6 && momentumMultiplier < 100) inaccuracyFactor = 0;
+                if (precisionLevel >= 7 && momentumMultiplier < 200) inaccuracyFactor = 0;
+                if (precisionLevel >= 8 && momentumMultiplier < 400) inaccuracyFactor = 0;
+                if (precisionLevel >= 9) inaccuracyFactor = 0; // Perfect accuracy always
+            }
+            
+            // Check if click missed
+            const missThreshold = radius * (1 + inaccuracyFactor);
+            const clickMissed = distance > radius && isAutoClick;
+            
+            if (clickMissed) {
+                // Show X for missed click
+                lastClickWasMiss = true;
+                totalMissedClicks++;
+                totalAutoClicks++;
+                spawnFloatingText(x, y, "❌", Math.PI / 2, 1);
+                createParticles(x, y, Math.PI / 2, 1);
+                return; // Don't give cookies for missed clicks
+            }
+            
+            // Count successful auto clicks
+            if (isAutoClick) {
+                totalAutoClicks++;
+            }
+            
+            lastClickWasMiss = false;
+
             // Heat Logic
             if (state.metaUpgrades.clickFrenzy.count > 0) {
                 const frenzyLevel = state.metaUpgrades.clickFrenzy.count;
@@ -1094,7 +1199,36 @@
                                 const rect = cookieBtn.getBoundingClientRect();
                                 const centerX = rect.left + rect.width / 2;
                                 const centerY = rect.top + rect.height / 2;
-                                performClick(centerX, centerY);
+                                const radius = rect.width / 2;
+                                
+                                // Calculate inaccuracy
+                                let offsetX = 0;
+                                let offsetY = 0;
+                                
+                                if (state.metaUpgrades.clickFrenzy.count >= 8 && (heat >= 100 || momentumMultiplier > 1.5)) {
+                                    const momentumInaccuracy = (momentumMultiplier - 1) * 0.3;
+                                    const heatInaccuracy = (heat / 150) * 0.2;
+                                    let inaccuracyFactor = momentumInaccuracy + heatInaccuracy;
+                                    
+                                    const precisionLevel = state.metaUpgrades.autoClickPrecision.count;
+                                    if (precisionLevel >= 1) inaccuracyFactor *= 0.8;
+                                    if (precisionLevel >= 2) inaccuracyFactor *= 0.75;
+                                    if (precisionLevel >= 3) inaccuracyFactor *= 0.67;
+                                    if (precisionLevel >= 4) inaccuracyFactor *= 0.5;
+                                    if (precisionLevel >= 5 && momentumMultiplier < 50) inaccuracyFactor = 0;
+                                    if (precisionLevel >= 6 && momentumMultiplier < 100) inaccuracyFactor = 0;
+                                    if (precisionLevel >= 7 && momentumMultiplier < 200) inaccuracyFactor = 0;
+                                    if (precisionLevel >= 8 && momentumMultiplier < 400) inaccuracyFactor = 0;
+                                    if (precisionLevel >= 9) inaccuracyFactor = 0;
+                                    
+                                    const maxOffset = radius * inaccuracyFactor;
+                                    const angle = Math.random() * Math.PI * 2;
+                                    const distance = Math.random() * maxOffset;
+                                    offsetX = Math.cos(angle) * distance;
+                                    offsetY = Math.sin(angle) * distance;
+                                }
+                                
+                                performClick(centerX + offsetX, centerY + offsetY, true);
                             }, interval);
                         }
                     }
@@ -1137,7 +1271,35 @@
                         const rect = cookieBtn.getBoundingClientRect();
                         const centerX = rect.left + rect.width / 2;
                         const centerY = rect.top + rect.height / 2;
-                        performClick(centerX, centerY);
+                        const radius = rect.width / 2;
+                        
+                        let offsetX = 0;
+                        let offsetY = 0;
+                        
+                        if (state.metaUpgrades.clickFrenzy.count >= 8 && (heat >= 100 || momentumMultiplier > 1.5)) {
+                            const momentumInaccuracy = (momentumMultiplier - 1) * 0.3;
+                            const heatInaccuracy = (heat / 150) * 0.2;
+                            let inaccuracyFactor = momentumInaccuracy + heatInaccuracy;
+                            
+                            const precisionLevel = state.metaUpgrades.autoClickPrecision.count;
+                            if (precisionLevel >= 1) inaccuracyFactor *= 0.8;
+                            if (precisionLevel >= 2) inaccuracyFactor *= 0.75;
+                            if (precisionLevel >= 3) inaccuracyFactor *= 0.67;
+                            if (precisionLevel >= 4) inaccuracyFactor *= 0.5;
+                            if (precisionLevel >= 5 && momentumMultiplier < 50) inaccuracyFactor = 0;
+                            if (precisionLevel >= 6 && momentumMultiplier < 100) inaccuracyFactor = 0;
+                            if (precisionLevel >= 7 && momentumMultiplier < 200) inaccuracyFactor = 0;
+                            if (precisionLevel >= 8 && momentumMultiplier < 400) inaccuracyFactor = 0;
+                            if (precisionLevel >= 9) inaccuracyFactor = 0;
+                            
+                            const maxOffset = radius * inaccuracyFactor;
+                            const angle = Math.random() * Math.PI * 2;
+                            const distance = Math.random() * maxOffset;
+                            offsetX = Math.cos(angle) * distance;
+                            offsetY = Math.sin(angle) * distance;
+                        }
+                        
+                        performClick(centerX + offsetX, centerY + offsetY, true);
                     }, interval);
                 }
             } else {
@@ -1501,6 +1663,7 @@
 
         // Stats Logic
         let statsChart = null;
+        let accuracyChart = null;
         let statsInterval = null;
         let currentChartFilter = 'all';
         let showCookies = true;
@@ -1515,11 +1678,18 @@
             const now = Date.now();
             const totalUpgrades = Object.values(state.upgrades).reduce((acc, u) => acc + u.count, 0);
 
+            // Calculate accuracy
+            const successfulAutoClicks = totalAutoClicks - totalMissedClicks;
+            const accuracy = totalAutoClicks > 0 ? (successfulAutoClicks / totalAutoClicks) * 100 : 100;
+
             state.stats.history.push({
                 timestamp: now,
                 cookies: state.score,
                 cps: getCPS(),
-                upgrades: totalUpgrades
+                upgrades: totalUpgrades,
+                accuracy: accuracy,
+                totalAutoClicks: totalAutoClicks,
+                missedClicks: totalMissedClicks
             });
 
             // Dynamic History Limit based on Analytics Level
@@ -1531,6 +1701,7 @@
             if (analyticsLevel >= 5) maxHistory = 400;
             if (analyticsLevel >= 6) maxHistory = 800;
             if (analyticsLevel >= 7) maxHistory = 2000;
+            if (analyticsLevel >= 8) maxHistory = 5000;
 
             // Always keep at least a small buffer if they have no analytics yet, 
             // so when they buy level 2 they see something immediately.
@@ -1614,16 +1785,36 @@
                 if (state.metaUpgrades.analytics.count >= 2) {
                     renderChart();
                 }
+                if (state.metaUpgrades.analytics.count >= 8 && totalMissedClicks > 0) {
+                    renderAccuracyChart();
+                }
             }, 1000);
 
             if (state.metaUpgrades.analytics.count >= 2) {
                 renderChart();
+            }
+            if (state.metaUpgrades.analytics.count >= 8 && totalMissedClicks > 0) {
+                renderAccuracyChart();
             }
         }
 
         function updateStatsContent() {
             const timePlayed = ((Date.now() - state.stats.startTime) / 1000 / 60).toFixed(1);
             const analyticsLevel = state.metaUpgrades.analytics.count;
+
+            // Add missed clicks stat if relevant
+            let missedClicksRow = '';
+            if (state.metaUpgrades.clickFrenzy.count >= 8 && totalMissedClicks > 0) {
+                const totalAutoClicks = state.stats.totalClicks;
+                const successfulClicks = totalAutoClicks - totalMissedClicks;
+                const accuracy = (successfulClicks / totalAutoClicks * 100).toFixed(1);
+                missedClicksRow = `
+                    <div class="stat-row">
+                        <span class="stat-label">Auto-Click Accuracy</span>
+                        <span class="stat-value">${accuracy}% (${formatNumber(totalMissedClicks)} misses)</span>
+                    </div>
+                `;
+            }
 
             // Update Text
             statsText.innerHTML = `
@@ -1635,6 +1826,7 @@
                     <span class="stat-label">Total Clicks</span>
                     <span class="stat-value">${formatNumber(state.stats.totalClicks)}</span>
                 </div>
+                ${missedClicksRow}
                 <div class="stat-row">
                     <span class="stat-label">Time Played</span>
                     <span class="stat-value">${timePlayed} mins</span>
@@ -1654,6 +1846,14 @@
                 statsChartContainer.style.display = 'none';
                 chartFilters.style.display = 'none';
                 seriesFilters.style.display = 'none';
+            }
+
+            // Handle Accuracy Chart Visibility
+            const accuracyChartContainer = document.getElementById('accuracyChartContainer');
+            if (analyticsLevel >= 8 && totalMissedClicks > 0) {
+                accuracyChartContainer.style.display = 'block';
+            } else {
+                accuracyChartContainer.style.display = 'none';
             }
         }
 
@@ -1757,6 +1957,90 @@
                         },
                         plugins: {
                             legend: { labels: { color: '#fff' } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function renderAccuracyChart() {
+            const ctx = document.getElementById('accuracyChart');
+            if (!ctx) return;
+
+            const now = Date.now();
+            let filteredHistory = state.stats.history.filter(h => h.accuracy !== undefined);
+
+            if (currentChartFilter !== 'all') {
+                let timeMs;
+                switch(currentChartFilter) {
+                    case 'day': timeMs = 24 * 60 * 60 * 1000; break;
+                    case 'hour': timeMs = 60 * 60 * 1000; break;
+                    case '15min': timeMs = 15 * 60 * 1000; break;
+                    case '1min': timeMs = 60 * 1000; break;
+                }
+                filteredHistory = filteredHistory.filter(h => h.timestamp > now - timeMs);
+            }
+
+            const labels = filteredHistory.map((h, i) => i);
+            const accuracyData = filteredHistory.map(h => h.accuracy);
+
+            const datasets = [{
+                label: 'Accuracy %',
+                data: accuracyData,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 2,
+                pointHoverRadius: 4
+            }];
+
+            if (accuracyChart) {
+                accuracyChart.data.labels = labels;
+                accuracyChart.data.datasets = datasets;
+                accuracyChart.update('none');
+            } else {
+                accuracyChart = new Chart(ctx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        animation: false,
+                        responsive: true,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        scales: {
+                            x: { display: false },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                min: 0,
+                                max: 100,
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: { color: '#fff' },
+                                display: true
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Accuracy: ' + context.parsed.y.toFixed(1) + '%';
+                                    }
+                                }
+                            }
                         }
                     }
                 });
@@ -1975,7 +2259,35 @@
                             const rect = cookieBtn.getBoundingClientRect();
                             const centerX = rect.left + rect.width / 2;
                             const centerY = rect.top + rect.height / 2;
-                            performClick(centerX, centerY);
+                            const radius = rect.width / 2;
+                            
+                            let offsetX = 0;
+                            let offsetY = 0;
+                            
+                            if (state.metaUpgrades.clickFrenzy.count >= 8 && (heat >= 100 || momentumMultiplier > 1.5)) {
+                                const momentumInaccuracy = (momentumMultiplier - 1) * 0.3;
+                                const heatInaccuracy = (heat / 150) * 0.2;
+                                let inaccuracyFactor = momentumInaccuracy + heatInaccuracy;
+                                
+                                const precisionLevel = state.metaUpgrades.autoClickPrecision.count;
+                                if (precisionLevel >= 1) inaccuracyFactor *= 0.8;
+                                if (precisionLevel >= 2) inaccuracyFactor *= 0.75;
+                                if (precisionLevel >= 3) inaccuracyFactor *= 0.67;
+                                if (precisionLevel >= 4) inaccuracyFactor *= 0.5;
+                                if (precisionLevel >= 5 && momentumMultiplier < 50) inaccuracyFactor = 0;
+                                if (precisionLevel >= 6 && momentumMultiplier < 100) inaccuracyFactor = 0;
+                                if (precisionLevel >= 7 && momentumMultiplier < 200) inaccuracyFactor = 0;
+                                if (precisionLevel >= 8 && momentumMultiplier < 400) inaccuracyFactor = 0;
+                                if (precisionLevel >= 9) inaccuracyFactor = 0;
+                                
+                                const maxOffset = radius * inaccuracyFactor;
+                                const angle = Math.random() * Math.PI * 2;
+                                const distance = Math.random() * maxOffset;
+                                offsetX = Math.cos(angle) * distance;
+                                offsetY = Math.sin(angle) * distance;
+                            }
+                            
+                            performClick(centerX + offsetX, centerY + offsetY, true);
                         }, interval);
                     }
                 } catch (e) {
