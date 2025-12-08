@@ -87,6 +87,13 @@
                 </div>
                 <div id="statsChartContainer"
                     style="display: none; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <div id="chartFilters" style="display: none; margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="chart-filter-btn active" data-filter="all">All Time</button>
+                        <button class="chart-filter-btn" data-filter="day">Last Day</button>
+                        <button class="chart-filter-btn" data-filter="hour">Last Hour</button>
+                        <button class="chart-filter-btn" data-filter="15min">Last 15 Min</button>
+                        <button class="chart-filter-btn" data-filter="1min">Last Minute</button>
+                    </div>
                     <canvas id="statsChart"></canvas>
                 </div>
             </div>
@@ -1452,6 +1459,7 @@
         // Stats Logic
         let statsChart = null;
         let statsInterval = null;
+        let currentChartFilter = 'all';
 
         function recordAnalyticsData() {
             // Only record if we have Analytics Lvl 4 unlocked
@@ -1490,6 +1498,30 @@
         function showStats() {
             updateStatsContent();
             statsModal.classList.add('active');
+
+            // Add filter button listeners
+            const filterBtns = document.querySelectorAll('.chart-filter-btn');
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Remove active from all
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    // Add active to clicked
+                    e.target.classList.add('active');
+                    // Update filter
+                    currentChartFilter = e.target.dataset.filter;
+                    // Re-render chart
+                    renderChart();
+                });
+            });
+
+            // Set initial active button
+            filterBtns.forEach(btn => {
+                if (btn.dataset.filter === currentChartFilter) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
 
             // Live Update Loop
             if (statsInterval) clearInterval(statsInterval);
@@ -1532,8 +1564,10 @@
             // Handle Chart Visibility
             if (analyticsLevel >= 2) {
                 statsChartContainer.style.display = 'block';
+                chartFilters.style.display = 'flex';
             } else {
                 statsChartContainer.style.display = 'none';
+                chartFilters.style.display = 'none';
             }
         }
 
@@ -1547,10 +1581,24 @@
             if (!ctx) return;
 
             const level = state.metaUpgrades.analytics.count;
-            const labels = state.stats.history.map((h, i) => i);
-            const cookiesData = state.stats.history.map(h => h.cookies);
-            const cpsData = state.stats.history.map(h => h.cps);
-            const upgradesData = state.stats.history.map(h => h.upgrades);
+            const now = Date.now();
+            let filteredHistory = state.stats.history;
+
+            if (currentChartFilter !== 'all') {
+                let timeMs;
+                switch(currentChartFilter) {
+                    case 'day': timeMs = 24 * 60 * 60 * 1000; break;
+                    case 'hour': timeMs = 60 * 60 * 1000; break;
+                    case '15min': timeMs = 15 * 60 * 1000; break;
+                    case '1min': timeMs = 60 * 1000; break;
+                }
+                filteredHistory = state.stats.history.filter(h => h.timestamp > now - timeMs);
+            }
+
+            const labels = filteredHistory.map((h, i) => i);
+            const cookiesData = filteredHistory.map(h => h.cookies);
+            const cpsData = filteredHistory.map(h => h.cps);
+            const upgradesData = filteredHistory.map(h => h.upgrades);
 
             const datasets = [];
 
