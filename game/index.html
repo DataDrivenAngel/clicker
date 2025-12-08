@@ -1605,10 +1605,15 @@
                 state.stats.totalCookies += reward;
                 updateUI();
 
-                // Create weeping willow effect before removing the cookie
-                createWillowEffect(e.clientX, e.clientY);
+                // Get the golden cookie's center position
+                const rect = el.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                // Create weeping willow effect at the golden cookie's center
+                createWillowEffect(centerX, centerY);
                 
-                spawnFloatingText(e.clientX, e.clientY, `+${formatNumber(reward)}!`);
+                spawnFloatingText(centerX, centerY, `+${formatNumber(reward)}!`);
                 el.remove();
             };
 
@@ -2190,6 +2195,20 @@
 
         // Weeping Willow Effect for Golden Cookies
         function createWillowEffect(x, y) {
+            // Create "GOLDEN COOKIE" text at center
+            const textEl = document.createElement('div');
+            textEl.className = 'golden-cookie-text';
+            textEl.textContent = 'GOLDEN COOKIE';
+            textEl.style.left = `${x}px`;
+            textEl.style.top = `${y}px`;
+            textEl.style.transform = 'translate(-50%, -50%)';
+            document.body.appendChild(textEl);
+            
+            // Remove text after animation
+            setTimeout(() => {
+                textEl.remove();
+            }, 2000);
+            
             const particleCount = 15; // Number of smaller cookies to spawn
             
             for (let i = 0; i < particleCount; i++) {
