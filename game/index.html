@@ -17,6 +17,9 @@
     <!-- Gear Icon -->
     <button id="settingsBtn" class="settings-icon" aria-label="Open settings">⚙️</button>
 
+    <!-- FPS Counter -->
+    <div id="fpsCounter" class="fps-counter" style="display: none;">FPS: 60</div>
+
     <div id="game-container">
         <!-- Left Zone -->
         <div class="click-zone">
@@ -47,10 +50,12 @@
             <div id="clickProbabilityContainer" class="click-probability-container" style="display: none;">
                 <div class="probability-header">
                     <span>📍 CLICK POSITION DISTRIBUTION</span>
-                    <div class="probability-status">POSITION RANGE: COOKIE AREA | BINS: 20 | STATUS: <span id="clickProbabilityStatus">MONITORING</span></div>
+                    <div class="probability-status">POSITION RANGE: COOKIE AREA | BINS: 20 | STATUS: <span
+                            id="clickProbabilityStatus">MONITORING</span></div>
                 </div>
                 <div class="probability-graph-wrapper">
-                    <canvas id="clickProbabilityChart" style="background: rgba(0, 20, 0, 0.9); border-radius: 4px; width: 100%; height: 200px;"></canvas>
+                    <canvas id="clickProbabilityChart"
+                        style="background: rgba(0, 20, 0, 0.9); border-radius: 4px; width: 100%; height: 200px;"></canvas>
                 </div>
             </div>
         </div>
@@ -98,26 +103,36 @@
                 </div>
                 <div id="statsChartContainer"
                     style="display: none; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <div id="chartFilters" style="display: none; margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <div id="chartFilters"
+                        style="display: none; margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <button class="chart-filter-btn active" data-filter="all">All Time</button>
                         <button class="chart-filter-btn" data-filter="day">Last Day</button>
                         <button class="chart-filter-btn" data-filter="hour">Last Hour</button>
                         <button class="chart-filter-btn" data-filter="15min">Last 15 Min</button>
                         <button class="chart-filter-btn" data-filter="1min">Last Minute</button>
                     </div>
-                    <div id="seriesFilters" style="display: none; margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+                    <div id="seriesFilters"
+                        style="display: none; margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
                     <canvas id="statsChart"></canvas>
                 </div>
-                <div id="accuracyChartContainer" style="display: none; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <h3 style="color: rgba(255,255,255,0.7); margin-bottom: 1rem; font-size: 1.2rem;">Auto-Click Accuracy</h3>
+                <div id="accuracyChartContainer"
+                    style="display: none; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <h3 style="color: rgba(255,255,255,0.7); margin-bottom: 1rem; font-size: 1.2rem;">Auto-Click
+                        Accuracy</h3>
                     <canvas id="accuracyChart"></canvas>
                 </div>
-                <div id="probabilityChartContainer" style="display: none; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <h3 style="color: rgba(16, 185, 129, 0.8); margin-bottom: 1rem; font-size: 1.2rem; font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 1px;">📡 Click Probability Distribution</h3>
-                    <div style="background: rgba(0, 0, 0, 0.8); border: 2px solid rgba(16, 185, 129, 0.6); border-radius: 8px; padding: 1rem; height: 300px;">
-                        <canvas id="probabilityChart" style="background: rgba(0, 20, 0, 0.9); border-radius: 4px; width: 100%; height: 100%;"></canvas>
+                <div id="probabilityChartContainer"
+                    style="display: none; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <h3
+                        style="color: rgba(16, 185, 129, 0.8); margin-bottom: 1rem; font-size: 1.2rem; font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 1px;">
+                        📡 Click Probability Distribution</h3>
+                    <div
+                        style="background: rgba(0, 0, 0, 0.8); border: 2px solid rgba(16, 185, 129, 0.6); border-radius: 8px; padding: 1rem; height: 300px;">
+                        <canvas id="probabilityChart"
+                            style="background: rgba(0, 20, 0, 0.9); border-radius: 4px; width: 100%; height: 100%;"></canvas>
                     </div>
-                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: rgba(16, 185, 129, 0.7); font-family: 'Courier New', monospace;">
+                    <div
+                        style="margin-top: 0.5rem; font-size: 0.8rem; color: rgba(16, 185, 129, 0.7); font-family: 'Courier New', monospace;">
                         SCAN RANGE: 5.0 SEC | RESOLUTION: 100MS | STATUS: <span id="probabilityStatus">MONITORING</span>
                     </div>
                 </div>
@@ -146,6 +161,24 @@
                     </button>
                 </div>
                 <input type="file" id="importFile" style="display: none" accept=".txt,.json">
+
+                <div <div
+                    style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px;">
+                    <span style="color: var(--text-main); font-weight: 500;">Show FPS Counter</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="fpsToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div id="detailedFPSContainer"
+                    style="display: none; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; margin-left: 1rem; border-left: 2px solid var(--accent);">
+                    <span style="color: var(--text-main); font-weight: 500; font-size: 0.9rem;">Detailed Mode</span>
+                    <label class="toggle-switch" style="transform: scale(0.9);">
+                        <input type="checkbox" id="fpsDetailedToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
 
                 <button id="resetBtn" class="reset-btn" aria-label="Wipe all save data"
                     style="width: 100%; padding: 1rem; font-size: 1rem;">
@@ -206,7 +239,7 @@
                 grandma750: { id: 'grandma750', name: 'Divine Baker', cost: 75000000, desc: 'Grandmas are twice as efficient.', trigger: { building: 'grandma', count: 750 }, effect: { type: 'mult', target: 'grandma', value: 2 }, purchased: false, icon: '🌟' },
                 grandma1000: { id: 'grandma1000', name: 'Cookie Goddess', cost: 100000000, desc: 'Grandmas are twice as efficient.', trigger: { building: 'grandma', count: 1000 }, effect: { type: 'mult', target: 'grandma', value: 2 }, purchased: false, icon: '👸' },
 
-                cheapHoes: { id: 'cheapHoes', name: 'Cheap Hoes', cost: 11000, desc: 'Farms are twice as efficient.', trigger: { building: 'farm', count: 10 }, effect: { type: 'mult', target: 'farm', value: 2 }, purchased: false, icon: '�' },
+                cheapHoes: { id: 'cheapHoes', name: 'Cheap Hoes', cost: 11000, desc: 'Farms are twice as efficient.', trigger: { building: 'farm', count: 10 }, effect: { type: 'mult', target: 'farm', value: 2 }, purchased: false, icon: '' },
                 fertilizer: { id: 'fertilizer', name: 'Fertilizer', cost: 55000, desc: 'Farms are twice as efficient.', trigger: { building: 'farm', count: 25 }, effect: { type: 'mult', target: 'farm', value: 2 }, purchased: false, icon: '💩' },
                 farm50: { id: 'farm50', name: 'Organic Farming', cost: 550000, desc: 'Farms are twice as efficient.', trigger: { building: 'farm', count: 50 }, effect: { type: 'mult', target: 'farm', value: 2 }, purchased: false, icon: '🌱' },
                 farm100: { id: 'farm100', name: 'Hydroponic Systems', cost: 1100000, desc: 'Farms are twice as efficient.', trigger: { building: 'farm', count: 100 }, effect: { type: 'mult', target: 'farm', value: 2 }, purchased: false, icon: '💧' },
@@ -508,7 +541,9 @@
                 autoClickerMode: 'on', // 'off', 'on'
                 clickProbabilityVisible: false, // visibility toggle for click probability graph
                 techEverUnlocked: false,
-                metaEverUnlocked: false
+                metaEverUnlocked: false,
+                showFPS: false,
+                showFPSDetailed: false
             }
         };
 
@@ -518,7 +553,10 @@
         // Fix: Deep copy defaultState to avoid mutation
         let state = JSON.parse(JSON.stringify(defaultState));
         // Ensure settings exist if loading from old save
-        if (!state.settings) state.settings = { autoBuyerMode: 'off', autoClickerMode: 'on' };
+        if (!state.settings) state.settings = { autoBuyerMode: 'off', autoClickerMode: 'on', showFPS: false, showFPSDetailed: false };
+        // Ensure showFPS exists
+        if (state.settings.showFPS === undefined) state.settings.showFPS = false;
+        if (state.settings.showFPSDetailed === undefined) state.settings.showFPSDetailed = false;
         // Ensure tech exists if loading from old save
         if (!state.tech) state.tech = JSON.parse(JSON.stringify(defaultState.tech));
         // Ensure new buildings exist
@@ -559,6 +597,13 @@
         let clickProbabilityData = []; // Array to store {timestamp, x, y} for 10 seconds
         let clickProbabilityChart = null; // Chart instance for click probability graph
         const PROBABILITY_TIME_WINDOW = 10000; // 10 seconds in milliseconds
+
+        // FPS Tracking
+        const fpsCounterEl = document.getElementById('fpsCounter');
+        let frameCount = 0;
+        let lastFpsUpdate = 0;
+        let fpsHistory = []; // Rolling history of FPS values
+        const MAX_FPS_HISTORY = 120; // 60 seconds * 2 updates per second
 
         // DOM Elements
         const scoreEl = document.getElementById('score');
@@ -608,7 +653,7 @@
         function getCost(upgradeId) {
             const u = state.upgrades[upgradeId];
             let cost = Math.floor(u.baseCost * Math.pow(1.15, u.count));
-            
+
             // Apply cost reduction tech upgrades
             let costReduction = 1.0;
             Object.values(state.tech).forEach(t => {
@@ -616,7 +661,7 @@
                     costReduction = Math.min(costReduction, t.effect.value);
                 }
             });
-            
+
             return Math.floor(cost * costReduction);
         }
 
@@ -632,7 +677,7 @@
                 let multiplier = 1;
                 let additiveBonus = 0;
                 let costReduction = 1.0;
-                
+
                 Object.values(state.tech).forEach(t => {
                     if (t.purchased) {
                         if (t.effect.type === 'mult' && t.effect.target === u.id) {
@@ -757,6 +802,40 @@
             settingsModal.addEventListener('click', (e) => {
                 if (e.target === settingsModal) settingsModal.classList.remove('active');
             });
+
+
+            // FPS Toggle
+            const fpsToggle = document.getElementById('fpsToggle');
+            const fpsDetailedToggle = document.getElementById('fpsDetailedToggle');
+            const detailedFPSContainer = document.getElementById('detailedFPSContainer');
+
+            fpsToggle.checked = state.settings.showFPS;
+            fpsDetailedToggle.checked = state.settings.showFPSDetailed;
+
+            if (state.settings.showFPS) {
+                fpsCounterEl.style.display = 'block';
+                detailedFPSContainer.style.display = 'flex';
+            } else {
+                detailedFPSContainer.style.display = 'none';
+            }
+
+            fpsToggle.addEventListener('change', (e) => {
+                state.settings.showFPS = e.target.checked;
+                fpsCounterEl.style.display = state.settings.showFPS ? 'block' : 'none';
+                detailedFPSContainer.style.display = state.settings.showFPS ? 'flex' : 'none';
+
+                // Clear history when toggled
+                if (!state.settings.showFPS) {
+                    fpsHistory = [];
+                }
+                saveGame();
+            });
+
+            fpsDetailedToggle.addEventListener('change', (e) => {
+                state.settings.showFPSDetailed = e.target.checked;
+                saveGame();
+            });
+
 
             resetBtn.addEventListener('click', () => {
                 if (confirm("Are you sure you want to wipe your save?")) {
@@ -1212,12 +1291,12 @@
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
             const radius = rect.width / 2;
-            
+
             // Calculate distance from center
             const dx = x - centerX;
             const dy = y - centerY;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            
+
             // Calculate inaccuracy based on heat and momentum
             let inaccuracyFactor = 0;
             if (state.metaUpgrades.clickFrenzy.count >= 8 && (heat >= 100 || momentumMultiplier > 1.5)) {
@@ -1225,12 +1304,12 @@
                 const momentumInaccuracy = (momentumMultiplier - 1) * 0.3; // 30% per momentum level
                 const heatInaccuracy = (heat / 150) * 0.2; // Up to 20% from heat
                 inaccuracyFactor = momentumInaccuracy + heatInaccuracy;
-                
+
                 // Add speed-based inaccuracy from auto clicker
                 if (state.metaUpgrades.autoClicker.count > 0) {
                     const clickerLevel = state.metaUpgrades.autoClicker.count;
                     const interval = autoClickerIntervals[clickerLevel - 1];
-                    
+
                     // Speed multiplier: increases dramatically below 1000ms
                     let speedMultiplier = 1.0;
                     if (interval <= 1000) {
@@ -1241,10 +1320,10 @@
                         // Above 1000ms: minimal scaling
                         speedMultiplier = 1.0 + (10000 - interval) / 50000;
                     }
-                    
+
                     inaccuracyFactor *= speedMultiplier;
                 }
-                
+
                 // Apply precision upgrades to reduce inaccuracy
                 const precisionLevel = state.metaUpgrades.autoClickPrecision.count;
                 if (precisionLevel >= 1) inaccuracyFactor *= 0.8; // -20%
@@ -1257,38 +1336,38 @@
                 if (precisionLevel >= 8 && momentumMultiplier < 400) inaccuracyFactor = 0;
                 if (precisionLevel >= 9) inaccuracyFactor = 0; // Perfect accuracy always
             }
-            
+
             // Check if click missed
             const missThreshold = radius * (1 + inaccuracyFactor);
             const clickMissed = distance > radius && isAutoClick;
-            
+
             if (clickMissed) {
                 // Show X for missed click
                 lastClickWasMiss = true;
                 totalMissedClicks++;
                 totalAutoClicks++;
-                
+
                 // Apply heat penalty on miss (subtract 5 heat, minimum 0)
                 if (state.metaUpgrades.clickFrenzy.count > 0) {
                     heat = Math.max(0, heat - 5);
                     updateHeatVisuals();
                 }
-                
+
                 // Apply temporary auto clicker speed penalty
                 // Each miss reduces speed by 10% (multiplicative), minimum 50% speed
                 autoClickerSpeedPenalty = Math.max(0.5, autoClickerSpeedPenalty * 0.9);
                 penaltyDecayTimer = 0; // Reset decay timer
-                
+
                 spawnFloatingText(x, y, "❌", Math.PI / 2, 1);
                 createParticles(x, y, Math.PI / 2, 1);
                 return; // Don't give cookies for missed clicks
             }
-            
+
             // Count successful auto clicks
             if (isAutoClick) {
                 totalAutoClicks++;
             }
-            
+
             lastClickWasMiss = false;
 
             // Heat Logic
@@ -1376,7 +1455,7 @@
             const text = (clickPower > 1) ? `+${clickPower} 🔥` : "+1";
             spawnFloatingText(x, y, text, clickAngle, momentumMultiplier);
             createParticles(x, y, clickAngle, momentumMultiplier);
-            
+
             // Spawn click visualization pixel if upgrade is active
             if (state.metaUpgrades.clickVisualization.count > 0) {
                 spawnClickPixel(x, y);
@@ -1422,16 +1501,16 @@
                                 const centerX = rect.left + rect.width / 2;
                                 const centerY = rect.top + rect.height / 2;
                                 const radius = rect.width / 2;
-                                
+
                                 // Calculate inaccuracy
                                 let offsetX = 0;
                                 let offsetY = 0;
-                                
+
                                 if (state.metaUpgrades.clickFrenzy.count >= 8 && (heat >= 100 || momentumMultiplier > 1.5)) {
                                     const momentumInaccuracy = (momentumMultiplier - 1) * 0.3;
                                     const heatInaccuracy = (heat / 150) * 0.2;
                                     let inaccuracyFactor = momentumInaccuracy + heatInaccuracy;
-                                    
+
                                     const precisionLevel = state.metaUpgrades.autoClickPrecision.count;
                                     if (precisionLevel >= 1) inaccuracyFactor *= 0.8;
                                     if (precisionLevel >= 2) inaccuracyFactor *= 0.75;
@@ -1442,14 +1521,14 @@
                                     if (precisionLevel >= 7 && momentumMultiplier < 200) inaccuracyFactor = 0;
                                     if (precisionLevel >= 8 && momentumMultiplier < 400) inaccuracyFactor = 0;
                                     if (precisionLevel >= 9) inaccuracyFactor = 0;
-                                    
+
                                     const maxOffset = radius * inaccuracyFactor;
                                     const angle = Math.random() * Math.PI * 2;
                                     const distance = Math.random() * maxOffset;
                                     offsetX = Math.cos(angle) * distance;
                                     offsetY = Math.sin(angle) * distance;
                                 }
-                                
+
                                 performClick(centerX + offsetX, centerY + offsetY, true);
                             }, penalizedInterval);
                         }
@@ -1495,15 +1574,15 @@
                         const centerX = rect.left + rect.width / 2;
                         const centerY = rect.top + rect.height / 2;
                         const radius = rect.width / 2;
-                        
+
                         let offsetX = 0;
                         let offsetY = 0;
-                        
+
                         if (state.metaUpgrades.clickFrenzy.count >= 8 && (heat >= 100 || momentumMultiplier > 1.5)) {
                             const momentumInaccuracy = (momentumMultiplier - 1) * 0.3;
                             const heatInaccuracy = (heat / 150) * 0.2;
                             let inaccuracyFactor = momentumInaccuracy + heatInaccuracy;
-                            
+
                             const precisionLevel = state.metaUpgrades.autoClickPrecision.count;
                             if (precisionLevel >= 1) inaccuracyFactor *= 0.8;
                             if (precisionLevel >= 2) inaccuracyFactor *= 0.75;
@@ -1514,14 +1593,14 @@
                             if (precisionLevel >= 7 && momentumMultiplier < 200) inaccuracyFactor = 0;
                             if (precisionLevel >= 8 && momentumMultiplier < 400) inaccuracyFactor = 0;
                             if (precisionLevel >= 9) inaccuracyFactor = 0;
-                            
+
                             const maxOffset = radius * inaccuracyFactor;
                             const angle = Math.random() * Math.PI * 2;
                             const distance = Math.random() * maxOffset;
                             offsetX = Math.cos(angle) * distance;
                             offsetY = Math.sin(angle) * distance;
                         }
-                        
+
                         performClick(centerX + offsetX, centerY + offsetY, true);
                     }, penalizedInterval);
                 }
@@ -1657,11 +1736,11 @@
         function updatePenaltyDecay() {
             if (autoClickerSpeedPenalty < 1.0) {
                 penaltyDecayTimer += 0.1; // Increment by 100ms (same as heat decay interval)
-                
+
                 // Penalty decays at 5% per second (0.05 per second = 0.005 per 100ms)
                 const decayRate = 0.005;
                 autoClickerSpeedPenalty = Math.min(1.0, autoClickerSpeedPenalty + decayRate);
-                
+
                 // Reset timer if penalty is fully recovered
                 if (autoClickerSpeedPenalty >= 1.0) {
                     penaltyDecayTimer = 0;
@@ -1861,7 +1940,7 @@
 
                 // Create weeping willow effect at the golden cookie's center
                 createWillowEffect(centerX, centerY);
-                
+
                 spawnFloatingText(centerX, centerY, `+${formatNumber(reward)}!`);
                 el.remove();
             };
@@ -1975,7 +2054,7 @@
         function showStats() {
             // Record fresh data point when opening stats
             recordAnalyticsData();
-            
+
             updateStatsContent();
             statsModal.classList.add('active');
 
@@ -2160,7 +2239,7 @@
 
             if (currentChartFilter !== 'all') {
                 let timeMs;
-                switch(currentChartFilter) {
+                switch (currentChartFilter) {
                     case 'day': timeMs = 24 * 60 * 60 * 1000; break;
                     case 'hour': timeMs = 60 * 60 * 1000; break;
                     case '15min': timeMs = 15 * 60 * 1000; break;
@@ -2266,13 +2345,13 @@
         // Click Tracking for Click Probability Graph (10 seconds)
         function trackClickForProbabilityGraph(dx, dy) {
             const now = Date.now();
-        
+
             // Remove clicks older than 10 seconds
             const tenSecondsAgo = now - PROBABILITY_TIME_WINDOW;
             clickProbabilityData = clickProbabilityData.filter(click => click.timestamp > tenSecondsAgo);
-        
+
             // Add current click
-            clickProbabilityData.push({timestamp: now, x: dx, y: dy});
+            clickProbabilityData.push({ timestamp: now, x: dx, y: dy });
         }
 
         function renderProbabilityChart() {
@@ -2281,10 +2360,10 @@
 
             const now = Date.now();
             const fiveSecondsAgo = now - TIME_WINDOW;
-            
+
             // Create 50 bins (100ms each for 5 seconds)
             const bins = new Array(50).fill(0);
-            
+
             // Count clicks in each 100ms bin
             clickFrequencyData.forEach(clickTime => {
                 if (clickTime > fiveSecondsAgo) {
@@ -2330,14 +2409,14 @@
                         scales: {
                             x: {
                                 display: true,
-                                grid: { 
+                                grid: {
                                     color: 'rgba(16, 185, 129, 0.2)',
                                     lineWidth: 1
                                 },
                                 ticks: {
                                     color: 'rgba(16, 185, 129, 0.8)',
                                     font: { family: 'Courier New', size: 8 },
-                                    callback: function(value, index) {
+                                    callback: function (value, index) {
                                         return index % 5 === 0 ? `${index * 100}ms` : '';
                                     }
                                 },
@@ -2351,7 +2430,7 @@
                             y: {
                                 display: true,
                                 beginAtZero: true,
-                                grid: { 
+                                grid: {
                                     color: 'rgba(16, 185, 129, 0.2)',
                                     lineWidth: 1
                                 },
@@ -2370,7 +2449,7 @@
                         },
                         plugins: {
                             legend: {
-                                labels: { 
+                                labels: {
                                     color: 'rgba(16, 185, 129, 0.8)',
                                     font: { family: 'Courier New', size: 10 }
                                 },
@@ -2385,11 +2464,11 @@
                                 titleFont: { family: 'Courier New', size: 12 },
                                 bodyFont: { family: 'Courier New', size: 10 },
                                 callbacks: {
-                                    title: function(context) {
+                                    title: function (context) {
                                         const timeMs = parseInt(context[0].label);
                                         return `Time: ${timeMs}-${timeMs + 100}ms`;
                                     },
-                                    label: function(context) {
+                                    label: function (context) {
                                         return `Clicks: ${context.parsed.y}`;
                                     }
                                 }
@@ -2428,7 +2507,7 @@
                 if (yBin >= 0 && yBin < binCount) yBins[yBin]++;
             });
 
-            const labels = xBins.map((_, i) => `${(i * binSize - radius).toFixed(0)} to ${( (i+1) * binSize - radius).toFixed(0)}`);
+            const labels = xBins.map((_, i) => `${(i * binSize - radius).toFixed(0)} to ${((i + 1) * binSize - radius).toFixed(0)}`);
 
             const datasets = [
                 {
@@ -2517,10 +2596,10 @@
                                 titleFont: { family: 'Courier New', size: 12 },
                                 bodyFont: { family: 'Courier New', size: 10 },
                                 callbacks: {
-                                    title: function(context) {
+                                    title: function (context) {
                                         return `Position: ${context[0].label}`;
                                     },
-                                    label: function(context) {
+                                    label: function (context) {
                                         return `${context.dataset.label}: ${context.parsed.y}`;
                                     }
                                 }
@@ -2548,7 +2627,7 @@
 
             if (currentChartFilter !== 'all') {
                 let timeMs;
-                switch(currentChartFilter) {
+                switch (currentChartFilter) {
                     case 'day': timeMs = 24 * 60 * 60 * 1000; break;
                     case 'hour': timeMs = 60 * 60 * 1000; break;
                     case '15min': timeMs = 15 * 60 * 1000; break;
@@ -2599,7 +2678,7 @@
                                 max: 100,
                                 grid: { color: 'rgba(255,255,255,0.1)' },
                                 ticks: {
-                                    callback: function(value) {
+                                    callback: function (value) {
                                         return value + '%';
                                     }
                                 }
@@ -2612,7 +2691,7 @@
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
+                                    label: function (context) {
                                         return 'Accuracy: ' + context.parsed.y.toFixed(1) + '%';
                                     }
                                 }
@@ -2765,17 +2844,17 @@
         function spawnClickPixel(x, y) {
             const pixel = document.createElement('div');
             pixel.className = 'click-pixel';
-            
+
             // Position relative to the cookie
             const rect = cookieBtn.getBoundingClientRect();
             const relativeX = x - rect.left;
             const relativeY = y - rect.top;
-            
+
             pixel.style.left = `${relativeX}px`;
             pixel.style.top = `${relativeY}px`;
-            
+
             cookieVisual.appendChild(pixel);
-            
+
             // Remove pixel after animation completes (10 seconds)
             setTimeout(() => {
                 if (pixel.parentNode) {
@@ -2806,12 +2885,12 @@
                 const clickX = rect.left + rect.width / 2;
                 const clickY = rect.top + rect.height / 2;
                 performClick(clickX, clickY);
-                
+
                 // Add a slight shake effect to the cookie for impact
                 cookieBtn.style.animation = 'none';
                 cookieBtn.offsetHeight; // Trigger reflow
                 cookieBtn.style.animation = 'cookieClickImpact 0.3s ease-out';
-            }, 1200); 
+            }, 1200);
 
             // Remove hand after animation completes
             setTimeout(() => {
@@ -2831,46 +2910,46 @@
             textEl.style.top = `${y}px`;
             textEl.style.transform = 'translate(-50%, -50%)';
             document.body.appendChild(textEl);
-            
+
             // Remove text after animation
             setTimeout(() => {
                 textEl.remove();
             }, 2000);
-            
+
             const particleCount = 15; // Number of smaller cookies to spawn
-            
+
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'willow-particle';
-                
+
                 // Create the cookie emoji
                 const cookie = document.createElement('div');
                 cookie.className = 'willow-cookie';
                 cookie.textContent = '🍪';
                 particle.appendChild(cookie);
-                
+
                 // Create the trail
                 const trail = document.createElement('div');
                 trail.className = 'willow-trail';
                 particle.appendChild(trail);
-                
+
                 // Position at click location
                 particle.style.left = `${x}px`;
                 particle.style.top = `${y}px`;
-                
+
                 document.body.appendChild(particle);
-                
+
                 // Calculate initial outward velocity (radial burst)
                 const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.3;
                 const initialSpeed = 80 + Math.random() * 60; // 80-140px initial burst
                 const vx = Math.cos(angle) * initialSpeed;
                 const vy = Math.sin(angle) * initialSpeed - 50; // Upward bias
-                
+
                 // Animate the particle
                 animateWillowParticle(particle, x, y, vx, vy, trail);
             }
         }
-        
+
         function animateWillowParticle(particle, startX, startY, vx, vy, trail) {
             let posX = 0;
             let posY = 0;
@@ -2881,42 +2960,42 @@
             const startTime = Date.now();
             const duration = 3000; // 3 seconds total
             let trailHeight = 0;
-            
+
             function animate() {
                 const elapsed = Date.now() - startTime;
                 if (elapsed > duration) {
                     particle.remove();
                     return;
                 }
-                
+
                 // Apply physics
                 velocityY += gravity; // Gravity pulls down
                 velocityX *= drag; // Air resistance
-                
+
                 posX += velocityX * 0.016; // Assuming roughly 60fps
                 posY += velocityY * 0.016;
-                
+
                 // Update position
                 particle.style.transform = `translate(${posX}px, ${posY}px)`;
-                
+
                 // Update trail - trail should stretch from starting point to current position
                 const distance = Math.sqrt(posX * posX + posY * posY);
                 trailHeight = Math.min(distance * 0.7, 100); // Max trail length of 100px
                 trail.style.height = `${trailHeight}px`;
-                
+
                 // Calculate angle for trail rotation (pointing from current to previous position)
                 const trailAngle = Math.atan2(velocityY, velocityX) * (180 / Math.PI) + 90;
                 trail.style.transform = `rotate(${trailAngle}deg)`;
-                
+
                 // Fade out near the end
                 const fadeProgress = elapsed / duration;
                 if (fadeProgress > 0.7) {
                     particle.style.opacity = 1 - (fadeProgress - 0.7) / 0.3;
                 }
-                
+
                 requestAnimationFrame(animate);
             }
-            
+
             animate();
         }
 
@@ -2936,6 +3015,43 @@
                     state.score += amount;
                     state.stats.totalCookies += amount;
                     updateUI();
+                }
+            }
+
+            // FPS Calculation
+            if (state.settings.showFPS) {
+                frameCount++;
+                if (currentTime - lastFpsUpdate >= 500) { // Update every 500ms
+                    const fps = Math.round((frameCount * 1000) / (currentTime - lastFpsUpdate));
+
+                    if (state.settings.showFPSDetailed) {
+                        fpsHistory.push(fps);
+                        if (fpsHistory.length > MAX_FPS_HISTORY) {
+                            fpsHistory.shift();
+                        }
+
+                        const high = Math.max(...fpsHistory);
+                        const low = Math.min(...fpsHistory);
+                        const sum = fpsHistory.reduce((a, b) => a + b, 0);
+                        const mean = (sum / fpsHistory.length).toFixed(1);
+
+                        // Median calculation
+                        const sorted = [...fpsHistory].sort((a, b) => a - b);
+                        const mid = Math.floor(sorted.length / 2);
+                        const median = sorted.length % 2 !== 0 ? sorted[mid] : ((sorted[mid - 1] + sorted[mid]) / 2).toFixed(1);
+
+                        fpsCounterEl.textContent = `FPS: ${fps}\nHi: ${high} Lo: ${low}\nAvg: ${mean} Med: ${median}`;
+                    } else {
+                        fpsCounterEl.textContent = `FPS: ${fps}`;
+                        fpsHistory = []; // Keep clear if detailed mode off
+                    }
+
+                    if (fps < 30) fpsCounterEl.style.color = '#ef4444'; // Red
+                    else if (fps < 50) fpsCounterEl.style.color = '#fbbf24'; // Yellow
+                    else fpsCounterEl.style.color = '#10b981'; // Green
+
+                    lastFpsUpdate = currentTime;
+                    frameCount = 0;
                 }
             }
 
@@ -2970,6 +3086,8 @@
                     }
                     if (!state.settings.autoBuyerMode) state.settings.autoBuyerMode = 'off';
                     if (!state.settings.autoClickerMode) state.settings.autoClickerMode = 'on';
+                    if (state.settings.showFPS === undefined) state.settings.showFPS = false;
+                    if (state.settings.showFPSDetailed === undefined) state.settings.showFPSDetailed = false;
 
                     // Fix: Restore upgrade counts carefully
                     Object.keys(parsed.upgrades).forEach(key => {
@@ -2996,15 +3114,15 @@
                             const centerX = rect.left + rect.width / 2;
                             const centerY = rect.top + rect.height / 2;
                             const radius = rect.width / 2;
-                            
+
                             let offsetX = 0;
                             let offsetY = 0;
-                            
+
                             if (state.metaUpgrades.clickFrenzy.count >= 8 && (heat >= 100 || momentumMultiplier > 1.5)) {
                                 const momentumInaccuracy = (momentumMultiplier - 1) * 0.3;
                                 const heatInaccuracy = (heat / 150) * 0.2;
                                 let inaccuracyFactor = momentumInaccuracy + heatInaccuracy;
-                                
+
                                 const precisionLevel = state.metaUpgrades.autoClickPrecision.count;
                                 if (precisionLevel >= 1) inaccuracyFactor *= 0.8;
                                 if (precisionLevel >= 2) inaccuracyFactor *= 0.75;
@@ -3015,14 +3133,14 @@
                                 if (precisionLevel >= 7 && momentumMultiplier < 200) inaccuracyFactor = 0;
                                 if (precisionLevel >= 8 && momentumMultiplier < 400) inaccuracyFactor = 0;
                                 if (precisionLevel >= 9) inaccuracyFactor = 0;
-                                
+
                                 const maxOffset = radius * inaccuracyFactor;
                                 const angle = Math.random() * Math.PI * 2;
                                 const distance = Math.random() * maxOffset;
                                 offsetX = Math.cos(angle) * distance;
                                 offsetY = Math.sin(angle) * distance;
                             }
-                            
+
                             performClick(centerX + offsetX, centerY + offsetY, true);
                         }, penalizedInterval);
                     }
@@ -3047,7 +3165,7 @@
             // Apply Tech Multipliers and other effects for this building
             let multiplier = 1;
             let additiveBonus = 0;
-            
+
             Object.values(state.tech).forEach(t => {
                 if (t.purchased) {
                     if (t.effect.type === 'mult' && t.effect.target === u.id) {
@@ -3076,7 +3194,7 @@
                     }
                 }
             });
-            
+
             totalCps = (totalCps * multiplier) + additiveBonus;
 
             // Advanced Analytics
