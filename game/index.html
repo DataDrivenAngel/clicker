@@ -605,6 +605,10 @@
         let fpsHistory = []; // Rolling history of FPS values
         const MAX_FPS_HISTORY = 120; // 60 seconds * 2 updates per second
 
+        // Performance Caching
+        let cachedBaseCPS = 0; // CPS from buildings and tech only
+        let shopUpdateTimer = 0; // Throttling shop UI updates
+
         // DOM Elements
         const scoreEl = document.getElementById('score');
         const cpsEl = document.getElementById('cps-display');
@@ -665,11 +669,9 @@
             return Math.floor(cost * costReduction);
         }
 
-        // Helper: Calculate Total CPS
-        function getCPS() {
+        // Helper: Calculate Base CPS (Buildings + Tech) - Call this on upgrade/tech purchase
+        function updateBaseCPS() {
             let cps = 0;
-
-            // Refined CPS Calculation
             Object.values(state.upgrades).forEach(u => {
                 let buildingCPS = u.cps * u.count;
 
@@ -695,10 +697,6 @@
                                 additiveBonus += t.effect.value * u.count;
                             }
                         }
-                        // Handle cost reduction
-                        else if (t.effect.type === 'cost_reduction' && t.effect.target === 'all') {
-                            costReduction = Math.min(costReduction, t.effect.value);
-                        }
                         // Handle synergies
                         else if (t.effect.type === 'synergy') {
                             if (t.effect.target === u.id) {
@@ -713,6 +711,12 @@
 
                 cps += (buildingCPS * multiplier) + additiveBonus;
             });
+            cachedBaseCPS = cps;
+        }
+
+        // Helper: Calculate Total CPS (Uses Cache + Dynamic Multipliers)
+        function getCPS() {
+            let cps = cachedBaseCPS;
 
             // Level 5: Inferno Mode - +10% CPS at Max Heat
             if (state.metaUpgrades.clickFrenzy.count >= 5 && heat >= 100) {
@@ -734,6 +738,7 @@
             createUpgradesList(); // Create DOM once
             createTechList(); // Create DOM once for tech
             createMetaList();
+            updateBaseCPS(); // Initialize Cache
             updateUI(); // Initial UI update
             requestAnimationFrame(gameLoop);
 
@@ -1061,6 +1066,7 @@
             if (state.score >= t.cost) {
                 state.score -= t.cost;
                 t.purchased = true;
+                updateBaseCPS(); // Update Cache
                 updateTechVisuals();
                 updateUI();
                 saveGame();
@@ -1435,7 +1441,7 @@
                 trackClickForProbabilityGraph(dx, dy);
             }
 
-            updateUI();
+            // updateUI(); // Optimization: Removed from critical path, handled by gameLoop in batches
 
             // Calculate angle based on heat for both text and particles
             let clickAngle;
@@ -1472,6 +1478,7 @@
             if (state.score >= cost) {
                 state.score -= cost;
                 state.upgrades[id].count++;
+                updateBaseCPS(); // Update Cache
                 updateUI();
                 // Fix: Removed synchronous saveGame() for performance
             }
@@ -1795,13 +1802,25 @@
             const now = Date.now();
             clickTimestamps.push(now);
 
-            // Remove clicks older than 60 seconds
+            // Remove clicks older than 60 seconds (Optimized)
             const sixtySecondsAgo = now - 60000;
-            clickTimestamps = clickTimestamps.filter(timestamp => timestamp > sixtySecondsAgo);
+            // Shift elements until we find one that is new enough
+            while (clickTimestamps.length > 0 && clickTimestamps[0] <= sixtySecondsAgo) {
+                clickTimestamps.shift();
+            }
 
             // Calculate clicks per second over 1-second intervals
+            // Optimized: Don't create new arrays with filter, just count
             const oneSecondAgo = now - 1000;
-            const clicksInLastSecond = clickTimestamps.filter(timestamp => timestamp > oneSecondAgo).length;
+            let clicksInLastSecond = 0;
+            // Iterate backwards as recent clicks are at the end
+            for (let i = clickTimestamps.length - 1; i >= 0; i--) {
+                if (clickTimestamps[i] > oneSecondAgo) {
+                    clicksInLastSecond++;
+                } else {
+                    break; // Timestamp list is sorted, so we can stop
+                }
+            }
 
             // Update max if current rate is higher
             if (clicksInLastSecond > maxClicksPerSecond) {
@@ -2702,15 +2721,22 @@
             }
         }
 
-        // UI Update
-        function updateUI() {
+        // UI Update Split
+        function updateScoreDisplay() {
             scoreEl.textContent = formatNumber(state.score);
             cpsEl.textContent = `${formatCPS(getCPS())} CPS`;
             document.title = `${formatNumber(state.score)} Cookies - Cosmic Clicker`;
+        }
 
+        function updateShopVisuals() {
             updateUpgradeVisuals(); // Check affordability
             updateTechVisuals(); // Check tech affordability/unlocks
             checkNotifications(); // Check for notifications
+        }
+
+        function updateUI() {
+            updateScoreDisplay();
+            updateShopVisuals();
         }
 
         function checkNotifications() {
@@ -3014,8 +3040,16 @@
                     const amount = cps * dt;
                     state.score += amount;
                     state.stats.totalCookies += amount;
-                    updateUI();
                 }
+            }
+
+            updateScoreDisplay(); // Fast: Update numbers every frame
+
+            // Throttle Shop Updates: Check affordability effectively 5 times per second instead of 60
+            shopUpdateTimer += dt;
+            if (shopUpdateTimer > 0.2) {
+                updateShopVisuals();
+                shopUpdateTimer = 0;
             }
 
             // FPS Calculation
@@ -3078,6 +3112,7 @@
                         metaUpgrades: { ...defaultState.metaUpgrades },
                         stats: { ...defaultState.stats, ...parsed.stats }
                     };
+                    updateBaseCPS(); // Restore Cache
 
                     // Migration: autoBuyerEnabled -> autoBuyerMode
                     if (parsed.settings && parsed.settings.autoBuyerEnabled !== undefined) {
